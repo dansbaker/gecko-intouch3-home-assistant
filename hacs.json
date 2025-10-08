@@ -1,0 +1,7 @@
+{
+  "name": "Gecko InTouch3 Spa Controller",
+  "zip_release": true,
+  "filename": "gecko_spa.zip",
+  "hide_default_branch": true,
+  "homeassistant": "2023.1.0"
+}

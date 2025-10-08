@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Gecko Hot Tub Setup",
+        "description": "To get your OAuth tokens:\\n\\n1. Open browser developer tools (F12)\\n2. Go to Network tab\\n3. Visit https://app.geckoalliance.com and login\\n4. Look for request to 'oauth/token' in Network tab\\n5. Copy the complete JSON response\\n6. Paste it below\\n\\nThe integration will automatically discover your hot tub details.",
+        "data": {
+          "token_json": "OAuth Token JSON Response"
+        },
+        "data_description": {
+          "token_json": "Complete JSON response from /oauth/token endpoint"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Integration",
+        "description": "The Gecko Hot Tub integration needs to be reauthenticated. Please confirm to continue."
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Gecko servers. Please check your internet connection and try again.",
+      "invalid_auth": "Invalid or expired tokens. Please get new tokens and try again.",
+      "missing_token_json": "Please provide the complete JSON response from /oauth/token endpoint.",
+      "unknown": "Unexpected error occurred. Please try again."
+    },
+    "abort": {
+      "already_configured": "This Gecko monitor is already configured."
+    }
+  }
+}
