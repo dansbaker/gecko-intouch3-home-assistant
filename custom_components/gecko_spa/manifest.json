@@ -7,7 +7,12 @@
   "issue_tracker": "https://github.com/dansbaker/gecko-intouch3-home-assistant/issues",
   "integration_type": "hub",
   "iot_class": "cloud_push",
-  "requirements": ["awsiotsdk>=1.20.0", "awscrt>=0.19.0", "requests>=2.31.0"],
+    "requirements": [
+    "awsiotsdk>=1.20.0",
+    "awscrt>=0.19.0", 
+    "requests>=2.31.0",
+    "aiohttp>=3.8.0"
+  ],
   "config_flow": true,
-  "version": "0.0.1"
+  "version": "0.1.0"
 }

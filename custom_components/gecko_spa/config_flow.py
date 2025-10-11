@@ -17,13 +17,15 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 import homeassistant.helpers.config_validation as cv
 
 from .const import DOMAIN
+from .auth0_client import GeckoAuth0Client, GeckoAuth0Error, GeckoAuth0InvalidCredentials, GeckoAuth0ConnectionError
 
 import logging
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required("token_json"): str,
+        vol.Required("username"): str,
+        vol.Required("password"): str,
     }
 )
 
@@ -36,26 +38,35 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Handle a flow initialized by the user."""
         if user_input is None:
             return self.async_show_form(
-                step_id="user", 
+                step_id="user",
                 data_schema=STEP_USER_DATA_SCHEMA,
                 description_placeholders={
-                    "oauth_url": "https://gecko-prod.us.auth0.com/oauth/token"
-                }
+                    "setup_instructions": "Enter your Gecko Connect username and password"
+                },
             )
 
         errors = {}
 
         try:
-            info = await self.validate_token_json(user_input["token_json"])
+            info = await self.validate_user_credentials(
+                user_input["username"], 
+                user_input["password"]
+            )
         except CannotConnect:
             errors["base"] = "cannot_connect"
         except InvalidAuth:
             errors["base"] = "invalid_auth"
+        except GeckoAuth0Error:
+            errors["base"] = "auth0_error"
+        except GeckoAuth0InvalidCredentials:
+            errors["base"] = "auth0_auth_error"
+        except GeckoAuth0ConnectionError:
+            errors["base"] = "auth0_network_error"
         except Exception:  # pylint: disable=broad-except
-            _LOGGER.exception("Unexpected exception")
+            _LOGGER.exception("Unexpected exception during authentication")
             errors["base"] = "unknown"
         else:
             return self.async_create_entry(title=info["title"], data=info["data"])
@@ -64,28 +75,30 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user",
             data_schema=STEP_USER_DATA_SCHEMA,
             errors=errors,
+            description_placeholders={
+                "setup_instructions": "Enter your Gecko Connect username and password"
+            },
         )
 
-    async def validate_token_json(self, token_json: str) -> dict[str, Any]:
-        """Validate the OAuth token JSON and discover account/vessel information."""
+    async def validate_user_credentials(self, username: str, password: str) -> dict[str, Any]:
+        """Validate user credentials and discover account/vessel information."""
         
-        try:
-            # Parse the token JSON
-            tokens = json.loads(token_json)
-        except json.JSONDecodeError:
-            raise InvalidAuth("Invalid JSON format. Please paste the complete response from /oauth/token")
+        _LOGGER.info("🔍 Starting Gecko authentication and discovery for user: %s", username)
         
-        # Validate required fields
+        # Step 1: Authenticate with Auth0
+        auth_client = GeckoAuth0Client(self.hass)
+        tokens = await auth_client.authenticate(username, password)
+        
         access_token = tokens.get("access_token")
         if not access_token:
-            raise InvalidAuth("No access_token found in the JSON response")
+            raise InvalidAuth("No access token received from authentication")
         
         refresh_token = tokens.get("refresh_token", access_token)
         expires_in = tokens.get("expires_in", 3600)
         
-        _LOGGER.info("🔍 Starting Gecko API discovery with OAuth tokens...")
+        _LOGGER.info("✅ Authentication successful, starting account discovery...")
         
-        # Step 1: Get user account information
+        # Step 2: Get user account information (existing logic)
         account_info = await self._get_account_info(access_token)
         if not account_info:
             raise InvalidAuth("Failed to get account information - token may be invalid")
@@ -96,7 +109,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         _LOGGER.info("✅ Discovered account ID: %s", account_id)
         
-        # Step 2: Get vessels for this account
+        # Step 3: Get vessels for this account (existing logic)
         vessels = await self._get_vessels(access_token, account_id)
         if not vessels:
             raise CannotConnect("No vessels (hot tubs) found for this account")
@@ -114,7 +127,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         _LOGGER.info("✅ Using vessel: %s (vesselId: %s, monitorId: %s)", vessel_name, vessel_id, monitor_id)
         
-        # Step 3: Get AWS credentials using the monitor ID
+        # Step 4: Get AWS credentials using the monitor ID (existing logic)
         aws_credentials = await self._get_aws_credentials(access_token, monitor_id)
         if not aws_credentials:
             raise CannotConnect("Failed to get AWS credentials for hot tub connection")
@@ -152,8 +165,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             # Simple JWT decode without verification (just split and base64 decode)
             header, payload, signature = access_token.split('.')
-            # Add padding if needed
-            payload += '=' * (4 - len(payload) % 4)
+            # Add padding if needed (safe calculation)
+            payload += '=' * (-len(payload) % 4)
             decoded_payload = base64.urlsafe_b64decode(payload)
             token_data = json.loads(decoded_payload)
             user_id = token_data.get("sub")

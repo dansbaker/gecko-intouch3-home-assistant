@@ -13,6 +13,7 @@ from homeassistant.config_entries import ConfigEntryAuthFailed, ConfigEntry
 
 # Import our existing Gecko controller
 from .gecko_controller import GeckoHotTubController
+from .auth0_client import GeckoAuth0Client
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,6 +69,14 @@ class GeckoDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from the Gecko controller."""
         try:
+            # Check if tokens need refreshing before doing any operations
+            if await self._should_refresh_tokens():
+                _LOGGER.info("Tokens need refreshing, attempting refresh...")
+                refresh_success = await self.refresh_tokens()
+                if not refresh_success:
+                    _LOGGER.error("Token refresh failed, may need reauthentication")
+                    raise ConfigEntryAuthFailed("OAuth tokens expired and refresh failed")
+            
             # Initialize controller if not done
             if not self._controller:
                 _LOGGER.info("Initializing Gecko controller for the first time")
@@ -189,66 +198,86 @@ class GeckoDataUpdateCoordinator(DataUpdateCoordinator):
             self._connected = False
             raise UpdateFailed(f"Error communicating with controller: {err}") from err
 
-    async def refresh_tokens(self) -> bool:
-        """Refresh the OAuth tokens and get new AWS credentials."""
-        try:
-            from homeassistant.helpers.aiohttp_client import async_get_clientsession
-            import json
+    async def _should_refresh_tokens(self) -> bool:
+        """Check if OAuth tokens need refreshing based on expiry time."""
+        if not self.config_entry:
+            return False
             
+        token_expires_at = self.config_entry.data.get("oauth_token_expires_at")
+        if not token_expires_at:
+            # No expiry info, assume we should refresh
+            return True
+            
+        try:
+            from datetime import datetime, timedelta
+            # Parse the expiry time
+            expiry_time = datetime.fromisoformat(token_expires_at)
+            # Refresh if token expires within the next 5 minutes
+            return datetime.now() >= (expiry_time - timedelta(minutes=5))
+        except (ValueError, TypeError):
+            # If we can't parse the expiry time, assume refresh is needed
+            _LOGGER.warning("Could not parse token expiry time: %s", token_expires_at)
+            return True
+
+    async def refresh_tokens(self) -> bool:
+        """Refresh the OAuth tokens using the Auth0Client and get new AWS credentials."""
+        try:
+            _LOGGER.info("Refreshing OAuth tokens for monitor %s", self.monitor_id)
+            
+            # Use our new Auth0Client for robust token refresh
+            auth_client = GeckoAuth0Client(self.hass)
+            
+            try:
+                # Attempt to refresh the existing token
+                token_data = await auth_client.refresh_token(self.oauth_refresh_token)
+                
+                # Update OAuth tokens
+                self.oauth_access_token = token_data["access_token"]
+                if "refresh_token" in token_data:
+                    self.oauth_refresh_token = token_data["refresh_token"]
+                
+                _LOGGER.info("OAuth tokens refreshed successfully")
+                
+            except Exception as refresh_error:
+                _LOGGER.warning("Token refresh failed: %s", refresh_error)
+                # If token refresh fails, we'll need to trigger reauthentication
+                # This will be handled by the coordinator's error handling
+                return False
+                
+            # Step 2: Get new AWS credentials with refreshed OAuth token
+            from homeassistant.helpers.aiohttp_client import async_get_clientsession
             session = async_get_clientsession(self.hass)
             
-            # Step 1: Refresh OAuth token
-            token_url = "https://gecko-prod.us.auth0.com/oauth/token"
-            
-            data = {
-                "grant_type": "refresh_token",
-                "client_id": "IlbhNGMeYfb8ovs0gK43CjPybltA3ogH",
-                "refresh_token": self.oauth_refresh_token,
+            livestream_url = f"https://api.geckowatermonitor.com/v2/monitors/{self.monitor_id}/liveStream"
+            headers = {
+                "Authorization": f"Bearer {self.oauth_access_token}",
+                "Content-Type": "application/json",
             }
             
-            async with session.post(token_url, data=data) as response:
-                if response.status == 200:
-                    token_data = await response.json()
-                    
-                    # Update OAuth tokens
-                    self.oauth_access_token = token_data["access_token"]
-                    if "refresh_token" in token_data:
-                        self.oauth_refresh_token = token_data["refresh_token"]
-                    
-                    # Step 2: Get new AWS credentials with refreshed OAuth token
-                    livestream_url = f"https://api.geckowatermonitor.com/v2/monitors/{self.monitor_id}/liveStream"
-                    headers = {
-                        "Authorization": f"Bearer {self.oauth_access_token}",
-                        "Content-Type": "application/json",
-                    }
-                    
-                    async with session.get(livestream_url, headers=headers) as aws_response:
-                        if aws_response.status == 200:
-                            self.aws_credentials = await aws_response.json()
-                            _LOGGER.info("AWS credentials refreshed successfully")
-                        else:
-                            _LOGGER.error("Failed to refresh AWS credentials: %s", aws_response.status)
-                            return False
-                    
-                    # Step 3: Update config entry with new tokens and credentials
-                    if self.config_entry:
-                        new_data = dict(self.config_entry.data)
-                        new_data["oauth_access_token"] = self.oauth_access_token
-                        new_data["oauth_refresh_token"] = self.oauth_refresh_token
-                        new_data["aws_credentials"] = self.aws_credentials
-                        from datetime import datetime, timedelta
-                        new_data["oauth_token_expires_at"] = (datetime.now() + timedelta(seconds=token_data.get("expires_in", 3600))).isoformat()
-                        
-                        self.hass.config_entries.async_update_entry(
-                            self.config_entry,
-                            data=new_data
-                        )
-                    
-                    _LOGGER.info("OAuth tokens and AWS credentials refreshed successfully")
-                    return True
+            async with session.get(livestream_url, headers=headers) as aws_response:
+                if aws_response.status == 200:
+                    self.aws_credentials = await aws_response.json()
+                    _LOGGER.info("AWS credentials refreshed successfully")
                 else:
-                    _LOGGER.error("OAuth token refresh failed: %s", response.status)
+                    _LOGGER.error("Failed to refresh AWS credentials: %s", aws_response.status)
                     return False
+            
+            # Step 3: Update config entry with new tokens and credentials
+            if self.config_entry:
+                new_data = dict(self.config_entry.data)
+                new_data["oauth_access_token"] = self.oauth_access_token
+                new_data["oauth_refresh_token"] = self.oauth_refresh_token
+                new_data["aws_credentials"] = self.aws_credentials
+                from datetime import datetime, timedelta
+                new_data["oauth_token_expires_at"] = (datetime.now() + timedelta(seconds=token_data.get("expires_in", 3600))).isoformat()
+                
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data=new_data
+                )
+            
+            _LOGGER.info("OAuth tokens and AWS credentials refreshed successfully")
+            return True
                     
         except Exception as e:
             _LOGGER.error("Token refresh error: %s", e)
