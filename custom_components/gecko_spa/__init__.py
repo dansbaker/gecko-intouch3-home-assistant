@@ -36,6 +36,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GeckoConfigEntry) -> boo
         monitor_id = entry.data.get("monitor_id")
         vessel_name = entry.data.get("vessel_name", "Unknown Hot Tub")
         aws_credentials = entry.data.get("aws_credentials")
+        spa_config = entry.data.get("spa_config", {})
         
         # Validate required fields
         if not oauth_access_token or not oauth_refresh_token:
@@ -53,6 +54,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: GeckoConfigEntry) -> boo
         _LOGGER.info("Setting up Gecko integration for %s (account: %s, vessel: %s, monitor: %s)", 
                     vessel_name, account_id, vessel_id, monitor_id)
         
+        # Log spa configuration info
+        if spa_config:
+            accessories = spa_config.get("accessories", {})
+            pumps = accessories.get("pumps", {})
+            lights = accessories.get("lights", {})
+            waterfalls = accessories.get("waterfalls", {})
+            blowers = accessories.get("blowers", {})
+            _LOGGER.info("Spa configuration: %d pump(s), %d light(s), %d waterfall(s), %d blower(s)",
+                        len(pumps), len(lights), len(waterfalls), len(blowers))
+        else:
+            _LOGGER.warning("No spa configuration found - will use default entities")
+        
         # Create the data coordinator
         coordinator = GeckoDataUpdateCoordinator(
             hass,
@@ -63,6 +76,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: GeckoConfigEntry) -> boo
             monitor_id,
             vessel_name,
             aws_credentials,
+            spa_config,
         )
         
         # Set config entry for token updates

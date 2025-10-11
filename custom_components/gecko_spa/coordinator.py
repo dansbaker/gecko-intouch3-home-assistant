@@ -30,6 +30,7 @@ class GeckoDataUpdateCoordinator(DataUpdateCoordinator):
         monitor_id: str,
         vessel_name: str,
         aws_credentials: dict[str, Any],
+        spa_config: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the coordinator."""
         super().__init__(
@@ -51,6 +52,9 @@ class GeckoDataUpdateCoordinator(DataUpdateCoordinator):
         
         # AWS credentials for IoT connection
         self.aws_credentials = aws_credentials
+        
+        # Spa configuration (pumps, lights, accessories)
+        self.spa_config = spa_config or {}
         
         # Controller state
         self._controller: GeckoHotTubController | None = None
@@ -478,6 +482,11 @@ class GeckoDataUpdateCoordinator(DataUpdateCoordinator):
     def _on_shadow_update(self, topic: str, payload: dict) -> None:
         """Handle real-time shadow state updates from MQTT."""
         _LOGGER.info(f"🔔 Real-time shadow update received on topic: {topic}")
+        
+        # Debug logging: Always log full MQTT payload when debug is enabled
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            _LOGGER.debug(f"🔔 MQTT Topic: {topic}")
+            _LOGGER.debug(f"🔔 MQTT Payload: {json.dumps(payload, indent=2, default=str)}")
         
         # Schedule immediate data refresh in the event loop
         if self.hass:

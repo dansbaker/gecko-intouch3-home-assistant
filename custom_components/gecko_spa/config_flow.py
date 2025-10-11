@@ -127,7 +127,21 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         
         _LOGGER.info("✅ Using vessel: %s (vesselId: %s, monitorId: %s)", vessel_name, vessel_id, monitor_id)
         
-        # Step 4: Get AWS credentials using the monitor ID (existing logic)
+        # Step 4: Get spa configuration (NEW - for dynamic entity creation)
+        spa_config = await self._get_spa_configuration(access_token, account_id, monitor_id)
+        if not spa_config:
+            _LOGGER.warning("⚠️ Failed to get spa configuration - will use defaults")
+            spa_config = {}
+        else:
+            accessories = spa_config.get("accessories", {})
+            pumps = accessories.get("pumps", {})
+            lights = accessories.get("lights", {})
+            waterfalls = accessories.get("waterfalls", {})
+            blowers = accessories.get("blowers", {})
+            _LOGGER.info("✅ Spa configuration: %d pump(s), %d light(s), %d waterfall(s), %d blower(s)",
+                        len(pumps), len(lights), len(waterfalls), len(blowers))
+        
+        # Step 5: Get AWS credentials using the monitor ID (existing logic)
         aws_credentials = await self._get_aws_credentials(access_token, monitor_id)
         if not aws_credentials:
             raise CannotConnect("Failed to get AWS credentials for hot tub connection")
@@ -150,6 +164,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "monitor_id": monitor_id,
                 "vessel_name": vessel_name,
                 "aws_credentials": aws_credentials,
+                "spa_config": spa_config,
             },
         }
 
@@ -232,6 +247,32 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vessels = data.get("vessels", [])
                     _LOGGER.info("✅ Found %d vessel(s)", len(vessels))
                     return vessels
+                else:
+                    error_text = await response.text()
+                    _LOGGER.error("❌ GET %s failed with %s: %s", url, response.status, error_text)
+                    return None
+        except Exception as e:
+            _LOGGER.error("❌ Error calling GET %s: %s", url, e)
+            return None
+
+    async def _get_spa_configuration(self, access_token: str, account_id: int, monitor_id: str) -> dict[str, Any] | None:
+        """Get spa configuration including pumps, lights, and accessories."""
+        url = f"https://api.geckowatermonitor.com/accounts/{account_id}/monitors/{monitor_id}/spa-configuration"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        }
+        
+        _LOGGER.info("🔍 Calling GET %s to get spa configuration", url)
+        
+        try:
+            session = async_get_clientsession(self.hass)
+            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    _LOGGER.info("✅ Spa configuration retrieved successfully")
+                    _LOGGER.debug("🔧 Spa configuration data: %s", data)
+                    return data
                 else:
                     error_text = await response.text()
                     _LOGGER.error("❌ GET %s failed with %s: %s", url, response.status, error_text)

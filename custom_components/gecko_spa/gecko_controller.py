@@ -411,7 +411,15 @@ class GeckoHotTubController:
             
             _LOGGER.info(f"📨 MQTT Message received on topic: {topic}")
             _LOGGER.info(f"📨 Payload size: {len(payload_str)} bytes")
-            _LOGGER.info(f"📨 Full payload: {json.dumps(json_payload, indent=2, default=str)}")
+            
+            # Debug logging: Always log full MQTT payload when debug is enabled
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug(f"📨 MQTT Topic: {topic}")
+                _LOGGER.debug(f"📨 Raw MQTT Payload: {payload_str}")
+                _LOGGER.debug(f"📨 Parsed MQTT Payload: {json.dumps(json_payload, indent=2, default=str)}")
+            else:
+                # In non-debug mode, just log a summary
+                _LOGGER.info(f"📨 Payload keys: {list(json_payload.keys()) if isinstance(json_payload, dict) else 'Not a dict'}")
             
             # Update shadow state if this is a shadow update
             if 'shadow' in topic and 'state' in json_payload:
@@ -576,6 +584,11 @@ class GeckoHotTubController:
         }
         
         try:
+            # Debug logging: Always log outgoing MQTT commands when debug is enabled
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                _LOGGER.debug(f"📤 Outgoing MQTT Topic: {topic}")
+                _LOGGER.debug(f"📤 Outgoing MQTT Payload: {json.dumps(payload, indent=2, default=str)}")
+            
             publish_packet = mqtt5.PublishPacket(
                 topic=topic,
                 payload=json.dumps(payload).encode('utf-8'),

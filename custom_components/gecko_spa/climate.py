@@ -67,6 +67,23 @@ class GeckoClimateEntity(CoordinatorEntity[GeckoDataUpdateCoordinator], ClimateE
             model=MODEL,
             sw_version="1.0.0",
         )
+        
+        # Set temperature limits from spa configuration if available
+        spa_config = coordinator.spa_config
+        zones = spa_config.get("zones", {})
+        temp_control = zones.get("temperatureControl", {})
+        
+        # Get temperature control zone (usually zone 1)
+        if temp_control:
+            # Get the first temperature control zone
+            first_zone = next(iter(temp_control.values()), {})
+            if first_zone:
+                self._attr_min_temp = first_zone.get("minTemperatureSetPointC", 20.0)
+                self._attr_max_temp = first_zone.get("maxTemperatureSetPointC", 40.0)
+                _LOGGER.info("Climate entity temperature limits from spa config: min=%s°C, max=%s°C",
+                           self._attr_min_temp, self._attr_max_temp)
+        else:
+            _LOGGER.warning("No temperature control configuration found, using defaults")
 
     @property
     def available(self) -> bool:
