@@ -180,10 +180,11 @@ class StandaloneAuth0Client:
 class GeckoDebugTool:
     """Comprehensive debug tool for Gecko integration."""
     
-    def __init__(self, username: str, password: str, output_file: str = None):
+    def __init__(self, username: str, password: str, output_file: str = None, redact_pii: bool = True):
         self.username = username
         self.password = password
         self.output_file = output_file or f"gecko_debug_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        self.redact_pii_enabled = redact_pii
         
         self.access_token: Optional[str] = None
         self.refresh_token: Optional[str] = None
@@ -200,7 +201,7 @@ class GeckoDebugTool:
         # Store all debug data
         self.debug_data = {
             "timestamp": datetime.now().isoformat(),
-            "username": "[REDACTED]",
+            "username": "[REDACTED]" if self.redact_pii_enabled else self.username,
             "authentication": {},
             "account": {},
             "vessel": {},
@@ -215,6 +216,10 @@ class GeckoDebugTool:
     
     def _redact_pii(self, data: Any, path: str = "") -> Any:
         """Recursively redact PII from data structures."""
+        # If redaction is disabled, return data as-is
+        if not self.redact_pii_enabled:
+            return data
+            
         if isinstance(data, dict):
             redacted = {}
             for key, value in data.items():
@@ -474,11 +479,14 @@ class GeckoDebugTool:
                     
                     self.aws_credentials = await response.json()
                     
-                    # Completely redact AWS credentials for security
-                    self.debug_data["aws_credentials"] = {
-                        "redacted": True,
-                        "note": "AWS IoT credentials redacted for security. Includes broker URL, auth tokens, and topic grants."
-                    }
+                    # Optionally redact AWS credentials for security
+                    if self.redact_pii_enabled:
+                        self.debug_data["aws_credentials"] = {
+                            "redacted": True,
+                            "note": "AWS IoT credentials redacted for security. Includes broker URL, auth tokens, and topic grants."
+                        }
+                    else:
+                        self.debug_data["aws_credentials"] = self.aws_credentials
                     
                     _LOGGER.info("✅ AWS credentials obtained")
                     return True
@@ -609,9 +617,9 @@ class GeckoDebugTool:
                 self.message_count += 1
                 timestamp = datetime.now().isoformat()
                 
-                # Redact monitor ID from topic
+                # Optionally redact monitor ID from topic
                 redacted_topic = topic
-                if self.monitor_id:
+                if self.redact_pii_enabled and self.monitor_id:
                     redacted_topic = topic.replace(str(self.monitor_id), "[MONITOR_ID]")
                 
                 # Store message
@@ -694,6 +702,11 @@ async def main():
         action="store_true",
         help="Enable verbose debug logging"
     )
+    parser.add_argument(
+        "--no-redact",
+        action="store_true",
+        help="Disable PII redaction (WARNING: output will contain sensitive information)"
+    )
     
     args = parser.parse_args()
     
@@ -706,7 +719,7 @@ async def main():
         password = getpass.getpass("Password: ")
     
     # Create and run debug tool
-    tool = GeckoDebugTool(args.username, password, args.output)
+    tool = GeckoDebugTool(args.username, password, args.output, redact_pii=not args.no_redact)
     
     try:
         await tool.run(args.duration)

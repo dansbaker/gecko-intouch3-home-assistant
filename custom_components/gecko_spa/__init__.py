@@ -14,7 +14,7 @@ from .version import __version__
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SWITCH, Platform.SELECT]
 
 type GeckoConfigEntry = ConfigEntry[GeckoDataUpdateCoordinator]
 

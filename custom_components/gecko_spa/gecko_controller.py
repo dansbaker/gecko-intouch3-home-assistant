@@ -711,6 +711,44 @@ class GeckoHotTubController:
             f"♻️ {'Enabling' if enabled else 'Disabling'} eco mode"
         )
 
+    def set_water_care_mode(self, mode: int) -> bool:
+        """
+        Set the water care mode (operation mode).
+        
+        Args:
+            mode: Water care mode value (0-4)
+                  0 = Away from home
+                  1 = Standard
+                  2 = Energy Savings
+                  3 = Super Energy Savings
+                  4 = Weekender
+            
+        Returns:
+            True if command sent successfully, False otherwise
+        """
+        mode_names = {
+            0: "Away from home",
+            1: "Standard", 
+            2: "Energy Savings",
+            3: "Super Energy Savings",
+            4: "Weekender"
+        }
+        
+        if mode not in mode_names:
+            _LOGGER.error(f"Invalid water care mode: {mode}. Must be 0-4")
+            return False
+        
+        desired_state = {
+            "features": {
+                "operationMode": mode
+            }
+        }
+        
+        return self._publish_shadow_update(
+            desired_state,
+            f"🔧 Setting water care mode to {mode_names[mode]}"
+        )
+
     # Lighting Control Methods
     
     def turn_on_lights(self, zone: int = 1) -> bool:
