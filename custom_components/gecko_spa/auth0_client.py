@@ -122,7 +122,8 @@ class GeckoAuth0Client:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "*/*",
-            "User-Agent": "Gecko/1757965853 CFNetwork/3826.600.41 Darwin/24.6.0",
+            "User-Agent": "Gecko/1845930030 CFNetwork/1568.200.51 Darwin/24.0.0",
+            "Accept-Language": "en-GB,en;q=0.9",
         }
 
         # Use retry helper for transient network errors
@@ -154,15 +155,12 @@ class GeckoAuth0Client:
         """Get the authorization page and extract the state parameter."""
         session = async_get_clientsession(self.hass)
         
-        # Headers that mimic the mobile app
+        # Headers that mimic the mobile app - Updated to match current iOS app
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8,mt;q=0.7',
-            'Accept-Encoding': 'gzip, deflate, br, zstd',
-            'sec-ch-ua': '"Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"',
+            'User-Agent': 'Gecko/1845930030 CFNetwork/1568.200.51 Darwin/24.0.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
         }
         
         # Construct the authorization URL exactly like the mobile app
@@ -193,76 +191,111 @@ class GeckoAuth0Client:
                 final_url = str(response.url)
                 _LOGGER.debug("Authorization redirect URL: %s", final_url[:100] + "...")
                 
-                # Extract state from URL
-                if "/u/login?state=" in final_url:
+                # Extract state from URL - Auth0 now uses /u/login/identifier
+                if "/u/login/identifier?state=" in final_url or "/u/login?state=" in final_url:
                     state_match = re.search(r'state=([^&]+)', final_url)
                     if state_match:
                         state = urllib.parse.unquote(state_match.group(1))
                         _LOGGER.debug("Extracted auth state successfully")
                         return state
                 
-                raise GeckoAuth0Error("Failed to extract state from authorization flow")
+                raise GeckoAuth0Error(f"Failed to extract state from authorization flow. URL: {final_url[:200]}")
                 
         except aiohttp.ClientError as e:
             _LOGGER.error("Network error getting auth state: %s", e)
             raise GeckoAuth0ConnectionError(f"Network error: {e}") from e
     
     async def _submit_credentials(self, username: str, password: str, state: str) -> str:
-        """Submit credentials and get authorization code."""
+        """Submit credentials and get authorization code using Auth0's identifier-first flow."""
         session = async_get_clientsession(self.hass)
-        
-        # Submit credentials directly to /u/login
-        login_url = f"https://{self.auth0_domain}/u/login"
-        login_params = {"state": state}
-        
-        login_data = {
-            'state': state,
-            'username': username,
-            'password': password,
-            'action': 'default'
-        }
         
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Origin': f'https://{self.auth0_domain}',
-            'Referer': f'{login_url}?{urllib.parse.urlencode(login_params)}',
-            'sec-fetch-site': 'same-origin',
-            'sec-fetch-mode': 'navigate',
-            'sec-fetch-user': '?1',
-            'sec-fetch-dest': 'document',
-            'upgrade-insecure-requests': '1',
-            'cache-control': 'max-age=0'
+            'User-Agent': 'Gecko/1845930030 CFNetwork/1568.200.51 Darwin/24.0.0',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-GB,en;q=0.9',
         }
         
-        _LOGGER.debug("Submitting credentials to Auth0 (password not logged)")
+        # Step 1: Submit username to /u/login/identifier
+        identifier_url = f"https://{self.auth0_domain}/u/login/identifier"
+        identifier_params = {"state": state}
+        identifier_data = {
+            'state': state,
+            'username': username,
+            'js-available': 'true',
+            'webauthn-available': 'true',
+            'is-brave': 'false',
+            'webauthn-platform-available': 'false',
+            'action': 'default'
+        }
+        
+        headers['Referer'] = f'{identifier_url}?{urllib.parse.urlencode(identifier_params)}'
+        
+        _LOGGER.debug("Submitting username to Auth0 identifier page")
 
-        # Use retry helper to tolerate transient network failures
         try:
             response_text, status, headers_out = await self._post_with_retries(
                 session,
-                login_url,
-                params=login_params,
-                data=login_data,
+                identifier_url,
+                params=identifier_params,
+                data=identifier_data,
                 headers=headers,
                 allow_redirects=False,
                 return_headers=True,
             )
 
-            # Create a lightweight response-like context using returned values
-            status_code = status
+            if status == 400:
+                if 'invalid' in (response_text or '').lower() or 'wrong' in (response_text or '').lower():
+                    _LOGGER.warning("Invalid username provided")
+                    raise GeckoAuth0InvalidCredentials("Invalid username")
+                _LOGGER.error("Auth0 identifier submission failed: %s", (response_text or '')[:200])
+                raise GeckoAuth0Error(f"Identifier submission failed: {(response_text or '')[:200]}")
 
-            if status_code == 400:
+            if status == 429:
+                _LOGGER.warning("Rate limited by Auth0")
+                raise GeckoAuth0RateLimitError("Too many authentication attempts. Please try again later.")
+
+            if status not in [302, 303]:
+                _LOGGER.error("Unexpected identifier response: HTTP %s, %s", status, (response_text or '')[:200])
+                raise GeckoAuth0Error(f"Unexpected response: HTTP {status}")
+
+            # Step 2: Submit password to /u/login/password
+            password_url = f"https://{self.auth0_domain}/u/login/password"
+            password_params = {"state": state}
+            password_data = {
+                'state': state,
+                'username': username,
+                'password': password,
+                'action': 'default'
+            }
+            
+            headers['Referer'] = f'{password_url}?{urllib.parse.urlencode(password_params)}'
+            
+            _LOGGER.debug("Submitting password to Auth0 (password not logged)")
+
+            response_text, status, headers_out = await self._post_with_retries(
+                session,
+                password_url,
+                params=password_params,
+                data=password_data,
+                headers=headers,
+                allow_redirects=False,
+                return_headers=True,
+            )
+
+            if status == 400:
                 if 'invalid' in (response_text or '').lower() or 'wrong' in (response_text or '').lower():
                     _LOGGER.warning("Invalid credentials provided")
                     raise GeckoAuth0InvalidCredentials("Invalid username or password")
                 _LOGGER.error("Auth0 login failed: %s", (response_text or '')[:200])
                 raise GeckoAuth0Error(f"Login failed: {(response_text or '')[:200]}")
 
-            if status_code == 429:
+            if status == 429:
                 _LOGGER.warning("Rate limited by Auth0")
                 raise GeckoAuth0RateLimitError("Too many authentication attempts. Please try again later.")
 
-            if status_code in [302, 303]:
+            if status in [302, 303]:
                 location = headers_out.get('Location', '')
                 _LOGGER.debug("Login redirect to: %s", location)
 
@@ -285,8 +318,8 @@ class GeckoAuth0Client:
                     _LOGGER.error("Authorization resume failed: HTTP %s, %s", resume_response.status, resume_text[:200])
                     raise GeckoAuth0Error(f"Authorization resume failed: HTTP {resume_response.status}")
 
-            _LOGGER.error("Unexpected login response: HTTP %s, %s", status_code, (response_text or '')[:200])
-            raise GeckoAuth0Error(f"Unexpected response: HTTP {status_code}")
+            _LOGGER.error("Unexpected login response: HTTP %s, %s", status, (response_text or '')[:200])
+            raise GeckoAuth0Error(f"Unexpected response: HTTP {status}")
 
         except GeckoAuth0Error:
             raise
@@ -324,9 +357,9 @@ class GeckoAuth0Client:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "*/*",
-            "User-Agent": "Gecko/1757965853 CFNetwork/3826.600.41 Darwin/24.6.0",
+            "User-Agent": "Gecko/1845930030 CFNetwork/1568.200.51 Darwin/24.0.0",
             "auth0-client": "eyJuYW1lIjoiYXV0aDAtdnVlIiwidmVyc2lvbiI6IjIuMy4xIn0=",
-            "Accept-Language": "en-GB,en;q=0.5",
+            "Accept-Language": "en-GB,en;q=0.9",
         }
 
         _LOGGER.debug("Exchanging authorization code for tokens")
