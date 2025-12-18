@@ -1,5 +1,18 @@
 # Gecko InTouch3 Home Assistant Integration
 
+---
+
+## ⚠️ **DEPRECATED AND UNSUPPORTED** ⚠️
+
+**This repository is no longer maintained.**
+
+**Please use the official Gecko integration instead:**  
+### 🎉 **[https://github.com/geckoal/ha-gecko-integration](https://github.com/geckoal/ha-gecko-integration)** 🎉
+
+**Thanks to the Gecko team for supporting the Home Assistant community!!!**
+
+---
+
 [![GitHub Release](https://img.shields.io/github/release/dansbaker/gecko-intouch3-home-assistant.svg?style=flat-square)](https://github.com/dansbaker/gecko-intouch3-home-assistant/releases)
 [![GitHub License](https://img.shields.io/github/license/dansbaker/gecko-intouch3-home-assistant.svg?style=flat-square)](LICENSE)
 [![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2023.1%2B-blue.svg?style=flat-square)](https://www.home-assistant.io/)
