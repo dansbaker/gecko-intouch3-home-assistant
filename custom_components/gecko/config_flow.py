@@ -53,6 +53,14 @@ class ConfigFlow(
             # Merge new token data with existing entry data to preserve
             # vessels, account_id, user_id, and other non-token fields
             existing_entry = self._get_reauth_entry()
+            from .api import ConfigFlowGeckoApi
+            api_client = ConfigFlowGeckoApi(self.hass, data["token"]["access_token"])
+            try:
+                user_id, _account, account_id = await self._resolve_user_and_account(data, api_client)
+            except Exception:
+                return self.async_abort(reason="api_error")
+            if str(account_id) != str(existing_entry.data.get("account_id")):
+                return self.async_abort(reason="wrong_account")
             return self.async_update_reload_and_abort(
                 existing_entry,
                 data={**existing_entry.data, **data},

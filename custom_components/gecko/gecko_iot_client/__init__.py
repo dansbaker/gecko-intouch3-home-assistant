@@ -430,14 +430,17 @@ class GeckoIotClient:
                     self._logger.error(
                         f"❌ Publish timed out for {error_context} — message may not have been delivered"
                     )
+                    raise
                 except Exception as e:
                     self._logger.error(
                         f"❌ Failed to publish desired state for {error_context}: {e}"
                     )
+                    raise
             else:
                 self._logger.error(
                     f"Failed to publish change to {error_context}, not connected."
                 )
+                raise ConnectionError("Gecko device is not connected")
 
         # Zone control callback
         def zone_callback(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from homeassistant.exceptions import HomeAssistantError
 from typing import Any
 
 from homeassistant.components.select import SelectEntity
@@ -12,22 +13,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, WATERCARE_MODE_OPTIONS
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin
 from . import GeckoConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
-# Map operation modes to user-friendly names (matches OperationModeController.mode_name)
-WATERCARE_MODE_OPTIONS = [
-    "Away",
-    "Standard", 
-    "Savings",
-    "Super Savings",
-    "Weekender",
-    "Other"
-]
 
 
 async def async_setup_entry(
@@ -163,7 +155,7 @@ class GeckoWatercareSelectEntity(GeckoEntityAvailabilityMixin, CoordinatorEntity
             _LOGGER.debug("Setting operation mode to %s for vessel %s", option, self._vessel_name)
             
             # Use the clean API to set the mode by name
-            gecko_client.operation_mode_controller.set_mode_by_name(option)
+            await self.hass.async_add_executor_job(gecko_client.operation_mode_controller.set_mode_by_name, option)
             
             # Let the coordinator update handle state changes
             _LOGGER.debug("Sent watercare mode command for %s", self._attr_name)
@@ -172,4 +164,4 @@ class GeckoWatercareSelectEntity(GeckoEntityAvailabilityMixin, CoordinatorEntity
             await self.coordinator.async_request_refresh()
                 
         except Exception as e:
-            _LOGGER.error("Error setting watercare mode for %s: %s", self._attr_name, e)
+            raise HomeAssistantError(f"Could not set watercare mode: {e}") from e

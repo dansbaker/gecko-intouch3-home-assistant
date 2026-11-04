@@ -2,14 +2,16 @@
   "domain": "gecko",
   "name": "Gecko",
   "codeowners": [
-    "@geckoal"
+    "@dansbaker"
   ],
   "config_flow": true,
-  "dependencies": [],
-  "documentation": "https://github.com/geckoal/ha-gecko-integration",
+  "dependencies": [
+    "my"
+  ],
+  "documentation": "https://github.com/dansbaker/gecko-intouch3-home-assistant",
   "integration_type": "hub",
   "iot_class": "cloud_push",
-  "issue_tracker": "https://github.com/geckoal/ha-gecko-integration/issues",
+  "issue_tracker": "https://github.com/dansbaker/gecko-intouch3-home-assistant/issues",
   "loggers": [
     "custom_components.gecko.gecko_iot_client"
   ],
@@ -17,5 +19,5 @@
     "awscrt==0.36.1",
     "awsiotsdk==1.31.0"
   ],
-  "version": "2.1.1"
+  "version": "3.0.0"
 }

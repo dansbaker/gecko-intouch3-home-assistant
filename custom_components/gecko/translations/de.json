@@ -1,0 +1,14 @@
+{
+  "entity": {
+    "sensor": {
+      "flow_status": {
+        "name": "Durchflussstatus",
+        "state": {
+          "ok": "OK",
+          "flow_check": "Durchflussprüfung läuft",
+          "other": "Sonstiges (siehe raw_code)"
+        }
+      }
+    }
+  }
+}

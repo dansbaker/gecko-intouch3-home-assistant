@@ -21,7 +21,8 @@
       "no_url_available": "[%key:common::config_flow::abort::oauth2_no_url_available%]",
       "user_rejected_authorize": "[%key:common::config_flow::abort::oauth2_user_rejected_authorize%]",
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
-      "api_error": "Failed to connect to the Gecko API. Please try again later."
+      "api_error": "Failed to connect to the Gecko API. Please try again later.",
+      "wrong_account": "Sign in with the same Gecko account as this integration."
     },
     "create_entry": {
       "default": "[%key:common::config_flow::create_entry::authenticated%]"
@@ -29,17 +30,43 @@
   },
   "entity": {
     "sensor": {
-      "rf_strength": {
+      "rf_signal_strength": {
         "name": "RF Signal Strength"
       },
       "rf_channel": {
         "name": "RF Channel"
+      },
+      "pack_configuration": {
+        "name": "Pack Configuration"
+      },
+      "home_firmware_version": {
+        "name": "Home (EN) Firmware Version"
+      },
+      "home_serial_number": {
+        "name": "Home (EN) Serial Number"
+      },
+      "spa_firmware_version": {
+        "name": "Spa (CO) Firmware Version"
+      },
+      "spa_serial_number": {
+        "name": "Spa (CO) Serial Number"
+      },
+      "raw_api_data": {
+        "name": "Raw API Data"
       },
       "gateway_status": {
         "name": "Gateway Status"
       },
       "vessel_status": {
         "name": "Spa Status"
+      },
+      "flow_status": {
+        "name": "Flow Status",
+        "state": {
+          "ok": "OK",
+          "flow_check": "Flow check in progress",
+          "other": "Other (see raw_code)"
+        }
       }
     },
     "select": {

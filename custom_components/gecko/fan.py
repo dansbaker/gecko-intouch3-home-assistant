@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
+import math
+from homeassistant.exceptions import HomeAssistantError
 from typing import Any
 
 from homeassistant.components.fan import FanEntity, FanEntityFeature
@@ -13,8 +16,23 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
-from .entity import GeckoEntityAvailabilityMixin
+from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
 from . import GeckoConfigEntry
+from .telemetry import (
+    derive_flow_percentage,
+    get_flow_speed_step_values,
+    _reports_binary_near_max_speed_encoding,
+    derive_flow_speed_mode,
+    get_flow_initiators,
+    get_non_user_flow_initiators,
+    get_flow_speed_mode_for_percentage,
+    get_flow_speed_value_for_mode,
+    get_supported_flow_speed_modes,
+    is_checkflow_active,
+    is_filtration_flow_active,
+    is_flow_safe_to_deactivate,
+    is_user_controlled_flow_active,
+)
 
 from .gecko_iot_client.models.zone_types import ZoneType, FlowZoneType
 from .gecko_iot_client.models.flow_zone import FlowZone, FlowZoneCapabilities
@@ -31,7 +49,7 @@ async def async_setup_entry(
     if not runtime_data or not runtime_data.coordinators:
         _LOGGER.error("No coordinators found in runtime_data for config entry %s", config_entry.entry_id)
         return
-    created_entity_ids = set()
+    created_entity_ids: set[tuple[str, str]] = set()
     def create_discovery_callback(coordinator: GeckoVesselCoordinator):
         def discover_new_fan_entities():
             new_entities = []
@@ -39,7 +57,12 @@ async def async_setup_entry(
             pump_zones = vessel_coordinator.get_zones_by_type(ZoneType.FLOW_ZONE)
             flow_zones = [zone for zone in pump_zones if isinstance(zone, FlowZone)]
             for zone in flow_zones:
-                entity_id = f"{vessel_coordinator.vessel_name}_pump_{zone.id}".lower()
+                # Names can collide (or be renamed); discovery identity must use
+                # the same stable vessel and zone identifiers as unique_id.
+                entity_id = (
+                    str(vessel_coordinator.vessel_id),
+                    str(zone.id),
+                )
                 if entity_id not in created_entity_ids:
                     entity = GeckoFan(vessel_coordinator, config_entry, zone)
                     new_entities.append(entity)
@@ -53,136 +76,143 @@ async def async_setup_entry(
         discovery_callback()
         coordinator.register_zone_update_callback(discovery_callback)
 
-class GeckoFan(GeckoEntityAvailabilityMixin, CoordinatorEntity, FanEntity):
-    """Representation of a Gecko pump fan (multi-speed or variable speed)."""
+class GeckoFan(GeckoZoneEntityMixin, GeckoEntityAvailabilityMixin, CoordinatorEntity, FanEntity):
+    """Physical pump state with separate manual and automatic demand telemetry."""
 
     _attr_has_entity_name = True
-    coordinator: GeckoVesselCoordinator
-    
-    def __init__(
-        self,
-        coordinator: GeckoVesselCoordinator,
-        config_entry: GeckoConfigEntry,
-        zone: FlowZone,  # FlowZone from coordinator
-    ) -> None:
-        """Initialize the Pump Fan."""
-        FanEntity.__init__(self)
-        CoordinatorEntity.__init__(self, coordinator)
-        self._coordinator: GeckoVesselCoordinator = coordinator
+    _zone_type = ZoneType.FLOW_ZONE
+
+    def __init__(self, coordinator, config_entry, zone: FlowZone) -> None:
+        super().__init__(coordinator)
+        self._coordinator = coordinator
         self._zone = zone
         self._attr_name = zone.name
-        self._attr_unique_id = (
-            f"{config_entry.entry_id}_{coordinator.vessel_id}_pump_{zone.id}"
-        )
-
-        self._attr_device_info = dr.DeviceInfo(
-            identifiers={(DOMAIN, str(coordinator.vessel_id))},
-        )
-        self._attr_supported_features = (
-            FanEntityFeature.TURN_OFF | FanEntityFeature.TURN_ON 
-        )
-        
-        if FlowZoneCapabilities.SUPPORTS_SPEED_PRESETS in self._zone.capabilities:
-            self._attr_supported_features |= FanEntityFeature.SET_SPEED
-            
-            self._speed_list = [preset.name for preset in self._zone.presets]
-        
-            self._attr_speed_list = self._speed_list
-        
-        # Set icon based on zone type
-        self._attr_icon = self._get_icon_for_zone_type()
-        
-        # Initialize state and availability from zone (will be set by async_added_to_hass event registration)
+        self._attr_unique_id = f"{config_entry.entry_id}_{coordinator.vessel_id}_pump_{zone.id}"
+        self._attr_device_info = dr.DeviceInfo(identifiers={(DOMAIN, str(coordinator.vessel_id))})
+        self._attr_icon = {
+            FlowZoneType.WATERFALL_ZONE: "mdi:waterfall",
+            FlowZoneType.BLOWER_ZONE: "mdi:wind-power",
+        }.get(zone.type, "mdi:pump")
         self._attr_available = False
+        self._attr_speed = None
         self._update_from_zone()
- 
-        
-    def _get_icon_for_zone_type(self) -> str:
-        """Return icon based on flow zone type."""
-        zone_type = self._zone.type
-        if zone_type == FlowZoneType.WATERFALL_ZONE:
-            return "mdi:waterfall"
-        elif zone_type == FlowZoneType.BLOWER_ZONE:
-            return "mdi:wind-power"
-        else:  # FLOW_ZONE (pump)
-            return "mdi:pump"
-    
-    async def async_added_to_hass(self) -> None:
-        """Register update callback when entity is added to hass."""
-        await super().async_added_to_hass()
-        self.coordinator.async_add_listener(self._handle_coordinator_update)
-        
-  
+
+    @property
+    def is_on(self):
+        return self._attr_is_on
+
+    @property
+    def speed_count(self) -> int:
+        zone = self._current_zone()
+        if zone is None:
+            return 1
+        steps = get_flow_speed_step_values(zone)
+        return len(steps) or (2 if _reports_binary_near_max_speed_encoding(zone) else 1)
+
     def _update_from_zone(self) -> None:
-        """Update state attributes from zone data."""
-        self._attr_is_on = self._zone.active
-        self._attr_percentage = int(self._zone.speed) if self._zone.speed is not None else 0
-        
-        if isinstance(self._zone.speed, (int, float)):
-            if self._zone.speed < 34:
-                self._attr_speed = "low"
-            elif self._zone.speed < 67:
-                self._attr_speed = "medium"
-            elif self._zone.speed <= 100:
-                self._attr_speed = "high"
-        
-        if not self._zone.active:
-            self._attr_speed = "off"
-            self._attr_is_on = False
-    
+        zone = self._current_zone()
+        if zone is None:
+            return
+        self._attr_supported_features = FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF
+        if self.speed_count > 1:
+            self._attr_supported_features |= FanEntityFeature.SET_SPEED
+        self._attr_is_on = zone.active
+        self._attr_percentage = derive_flow_percentage(zone)
+        self._attr_speed = derive_flow_speed_mode(zone)
+        initiators = zone.initiators
+        self._attr_extra_state_attributes = {
+            "initiators": None if initiators is None else [getattr(i, "value", i) for i in initiators],
+            "manual_demand": is_user_controlled_flow_active(zone, self.coordinator.get_spa_state()),
+            "automatic_initiators": sorted(get_non_user_flow_initiators(zone, self.coordinator.get_spa_state())),
+            "filtration_active": is_filtration_flow_active(zone, self.coordinator.get_spa_state()),
+            "checkflow_active": is_checkflow_active(zone, self.coordinator.get_spa_state()),
+            "physical_speed": self._attr_speed,
+        }
+
     @callback
     def _handle_coordinator_update(self) -> None:
-        _LOGGER.debug("Updating fan %s: is_on=%s, speed=%s", self._attr_name, self._attr_is_on, self._attr_speed)
         self._update_from_zone()
         self.async_write_ha_state()
-        
-    async def async_turn_on(self, percentage: int | None = None, preset_mode: str | None = None, **kwargs) -> None:
-        """Turn the fan on. Optionally set speed by percentage."""
-        _LOGGER.debug("Turning on pump %s", self._attr_name)
-        # Map percentage to speed
-        speed = "low"
+
+    async def async_turn_on(self, percentage=None, preset_mode=None, **kwargs) -> None:
+        zone = self._current_zone()
+        if zone is None:
+            return
         if percentage is not None:
-            if percentage < 34:
-                speed = "low"
-            elif percentage < 67:
-                speed = "medium"
-            else:
-                speed = "high"
-        await self.async_set_speed(speed)
-        
-    async def async_turn_off(self, **kwargs) -> None:
-        """Turn the fan off."""
-        self._zone.deactivate()
-        
-    @property
-    def is_on(self) -> bool | None:
-        """Return true if the entity is on."""
-        return self._attr_is_on 
-        
-    async def async_set_speed(self, speed: str) -> None:
-        # Map string speed to integer value expected by Gecko API
-        speed_map = {
-            "off": 0,
-            "low": 1,
-            "medium": 2,
-            "high": 3,
-        }
-        speed_value = speed_map.get(speed, 0)
+            await self.async_set_percentage(percentage)
+        elif get_flow_speed_step_values(zone):
+            await self.async_set_percentage(1)
+        else:
+            await self._async_zone_command(zone.activate)
+
+    async def async_set_percentage(self, percentage: int) -> None:
+        if percentage <= 0:
+            await self.async_turn_off()
+            return
+        zone = self._current_zone()
+        if zone is None:
+            return
+        steps = get_flow_speed_step_values(zone)
+        if steps:
+            index = math.ceil(min(100, percentage) * len(steps) / 100) - 1
+            speed = steps[max(0, index)]
+        elif _reports_binary_near_max_speed_encoding(zone):
+            speed = 50 if percentage <= 50 else 100
+        else:
+            # Without a configured ladder, do not invent numeric command values.
+            await self._async_zone_command(zone.activate)
+            return
+        if len(steps) == 2 and not zone.active and speed == steps[-1] and zone.speed == speed:
+            await self._start_low_first(zone, steps[0])
+        await self._async_zone_command(zone.set_speed, speed)
+
+    async def _start_low_first(self, zone, low):
+        """Adapt @lacroixdavid1's low-first start; require a real device report."""
+        started = asyncio.Event()
+        before = zone.report_sequence
+
+        @callback
+        def reported_running():
+            current = self._current_zone()
+            if current is zone and current.report_sequence > before and current.reported_active is True:
+                started.set()
+
+        remove = self.coordinator.async_add_listener(reported_running)
         try:
-            gecko_client = await self._coordinator.get_gecko_client()
-            if not gecko_client:
-                _LOGGER.error("No gecko client available for %s", self._attr_name)
-                return
-            pump_zones = self._coordinator.get_zones_by_type(ZoneType.FLOW_ZONE)
-            zone = next((z for z in pump_zones if z.id == self._zone.id), None)
-            if zone:
-                set_speed_method = getattr(zone, "set_speed", None)
-                if set_speed_method and callable(set_speed_method):
-                    set_speed_method(speed_value)
-                    # Let the coordinator update handle state changes
-                else:
-                    _LOGGER.warning("Zone %s does not have set_speed method", zone.id)
-            else:
-                _LOGGER.warning("Could not find pump zone %s", self._zone.id)
-        except Exception as e:
-            _LOGGER.error("Error setting pump %s speed: %s", self._attr_name, e)
+            await self._async_zone_command(zone.set_speed, low)
+            async with asyncio.timeout(15):
+                await started.wait()
+            if self._current_zone() is not zone:
+                raise HomeAssistantError("Spa reconnected during pump startup; retry the command")
+        except TimeoutError as err:
+            raise HomeAssistantError("Pump has not confirmed running; it may still start at low speed") from err
+        finally:
+            remove()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        zone = self._current_zone()
+        if zone is None:
+            return
+        try:
+            await self._async_zone_command(zone.deactivate)
+        except RuntimeError as err:
+            raise HomeAssistantError(str(err)) from err
+
+    async def async_set_speed(self, speed: str) -> None:
+        """Compatibility entry point; commands use configured values."""
+        if speed == "off":
+            await self.async_turn_off()
+            return
+        zone = self._current_zone()
+        if zone is None:
+            return
+        steps = get_flow_speed_step_values(zone)
+        if steps:
+            index = {"low": 0, "medium": (len(steps) - 1) // 2, "high": len(steps) - 1, "max": len(steps) - 1}.get(speed)
+            if index is None:
+                raise HomeAssistantError(f"Unsupported pump speed: {speed}")
+            await self.async_set_percentage(math.ceil((index + 1) * 100 / len(steps)))
+        elif _reports_binary_near_max_speed_encoding(zone) and speed in ("low", "high", "max"):
+            await self._async_zone_command(zone.set_speed, 50 if speed == "low" else 100)
+        else:
+            await self._async_zone_command(zone.activate)

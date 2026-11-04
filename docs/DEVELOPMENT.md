@@ -35,6 +35,6 @@ The consolidation merge retains the client repository's Git ancestry alongside t
 
 The client license is preserved at `custom_components/gecko/gecko_iot_client/LICENSE`, with provenance in the root `NOTICE`. Existing integration licensing and notices are retained.
 
-At consolidation, runtime changes are limited to package relocation, relative integration imports and replacing installed-distribution version lookup with the source identifier `1.0.3+bundled`. No upstream PR fixes are included yet. Subsequent bug fixes can update client models, transport and entities in the same change and ship through one integration release.
+At consolidation, runtime changes are limited to package relocation, relative integration imports and replacing installed-distribution version lookup with the source identifier `1.0.3+bundled`. The subsequent restoration changes update client models, transport and entities together; see [RESTORATION.md](RESTORATION.md) for the changes and verification.
 
 The imported reconnection tests isolate the transport clock from the test clock and explicitly stop/join their worker threads. This corrects upstream test timing races exposed by the Home Assistant test harness; it does not change runtime reconnect behavior.

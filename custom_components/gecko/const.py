@@ -40,3 +40,7 @@ OAUTH2_TOKEN = f"{AUTH0_URL_BASE}/oauth/token"
 
 # Client configuration
 CONFIG_TIMEOUT = 30.0  # Default timeout for GeckoIotClient configuration loading in seconds
+
+# Shared display names for the select and thermostat presets.
+WATERCARE_MODE_OPTIONS = ["Away", "Standard", "Savings", "Super Savings", "Weekender", "Other"]
+WATERCARE_SELECTABLE_MODES = WATERCARE_MODE_OPTIONS[:-1]

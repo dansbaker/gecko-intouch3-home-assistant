@@ -1,207 +1,72 @@
-<div align="center">
+# Gecko in.touch 3 / 3+ for Home Assistant
 
-# 🦎 Gecko Integration for Home Assistant
+**This repository is no longer abandoned.** Development has resumed here, and community contributions are welcome: fixes, device reports, documentation, tests and carefully scoped improvements all help.
 
-**Control your spa, hot tub, or pool equipment directly from Home Assistant**
+This is the continuation of Dan Baker's original community repository. The revived integration uses [Gecko's official integration](https://github.com/geckoal/ha-gecko-integration) as its code base, together with selected community fixes and improvements. It is maintained independently.
 
-[![GitHub Release](https://img.shields.io/github/release/geckoal/ha-gecko-integration.svg?style=for-the-badge)](https://github.com/geckoal/ha-gecko-integration/releases)
-[![HACS](https://img.shields.io/badge/HACS-Default-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=for-the-badge)](LICENSE)
+Thank you to the Gecko team for building the official integration and IoT client and making their work available. Maintaining an open source Home Assistant integration takes sustained work: keeping up with Home Assistant, supporting different spa configurations, investigating reports and reviewing contributions. We appreciate that effort and want to build on it constructively.
 
-</div>
+## Features
 
----
+- Temperature control, current/target temperature sensors, heating and heat pump status, eco state, and watercare presets.
+- Pump/blower control using the reported speed configuration. Physical running state remains visible, with separate manual, filtration and flow-check telemetry.
+- RGB, brightness and effects on lights that report those capabilities; on/off control for simpler lighting zones.
+- Connection health, RF/firmware telemetry, diagnostics and stable entity discovery.
+- Read-only Waterlab chemistry readings from Gecko's cloud: pH, ORP and supported additional readings when supplied by your account/device.
+- One repository and one installation: the IoT client ships inside the integration.
 
-## ✨ Features
+Available controls and sensors depend on your equipment and the data Gecko exposes. This integration uses Gecko's cloud and your existing Gecko account.
 
-<table>
-<tr>
-<td width="33%" valign="top">
+## Installation
 
-### 🌡️ Climate Control
-- Set target temperature
-- Monitor current temperature
-- Track heating status
+In HACS, add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a custom repository with category **Integration**, download Gecko, and restart Home Assistant. Until a revived release is published, use a checkout of the restoration branch for manual testing.
 
-</td>
-<td width="33%" valign="top">
+For manual installation, copy the complete `custom_components/gecko` directory into your Home Assistant `custom_components` directory and restart. The bundled client directory must be included.
 
-### 💡 Lighting
-- Multi-zone LED control
-- On/off control
+Then open **Settings → Devices & services → Add integration → Gecko** and follow the Gecko OAuth login. Keep Home Assistant's **My** integration enabled for the standard callback. If a login has lost its refresh token, use the prompted reauthentication flow.
 
-</td>
-<td width="33%" valign="top">
+### Existing installations
 
-### 💨 Pumps & Fans
-- Blower control
-- Multiple pump zones
+This build uses the official integration's `gecko` domain. Replace the existing `custom_components/gecko` files as a complete directory, then restart. It retains official config-entry data and migrates older name-based entity identifiers where possible.
 
-</td>
-</tr>
-<tr>
-<td width="33%" valign="top">
+The original abandoned implementation used `gecko_spa`. Its configuration and entity identities are different: remove that old integration and configure Gecko again, then update automations referencing its entities. Do not run both implementations for the same spa. Keep a Home Assistant backup before migrating.
 
-### 🔄 Watercare Modes
-- Away mode
-- Standard mode
-- Energy savings mode
-- Weekender mode
+## Waterlab
 
-</td>
-<td width="33%" valign="top">
+Waterlab support is read-only. After setup, the integration requests the vessel's cloud readings and refreshes them every five minutes independently of MQTT traffic. Sensors appear when Gecko returns actual supported reading records. This includes pH and ORP, plus water temperature and supported chemistry records such as alkalinity or chlorine when present. Additional records can originate from manual tests or computed results; each sensor retains the cloud's `source`, `status`, units and available timestamp fields, rather than presenting every value as a live probe measurement.
 
-### 📊 Monitoring
-- Gateway status
-- Connection health
+A failed refresh makes cloud readings unavailable. A missing reading is not replaced with zero. Cloud access denied/not found (HTTP 403/404) stops optional chemistry polling until reload, without taking pump or temperature controls offline. Cloud chemistry availability is independent of the MQTT link. `last_successful_poll` describes retrieval time, not measurement age; an old sample returned by Gecko can still be old.
 
-</td>
-<td width="33%" valign="top">
+Explicit numeric pH/ORP readings in reported MQTT extensions are also discovered. Unknown extension fields and calibration constants are opt-in diagnostics, disabled by default; calibration values are never presented as live chemistry. This build does not calibrate probes, issue dosing commands or change undocumented Waterlab settings.
 
-### ☁️ Cloud Integration
-- Secure OAuth2 login
-- AWS IoT backend
-- Automatic discovery
-- Push notifications
+The cloud payload handling is covered by automated tests based on public fork examples. Live chemistry and account permissions still need verification on Waterlab hardware. Reports with redacted payloads and timestamps are very welcome.
 
-</td>
-</tr>
-</table>
+## Troubleshooting and contributions
 
----
+If data stops updating, check the spa in the Gecko app and inspect the gateway/vessel connection entities. A pump running for filtration or heating can remain on after a manual off request; the integration preserves automatic-demand protection. Two-speed pumps parked at high speed can start at low first and wait for a device report before requesting high.
 
-## 📦 Installation
+Report problems and contribute changes in [this repository](https://github.com/dansbaker/gecko-intouch3-home-assistant/issues). Include your Home Assistant version, device/controller details, reproduction steps and redacted diagnostics. Remove tokens, credentials and personal identifiers from reports. See [development](docs/DEVELOPMENT.md), the [upstream issue/PR review](docs/UPSTREAM_REVIEW.md), [fork review](docs/FORK_REVIEW.md), and [restoration changes](docs/RESTORATION.md).
 
-### Method 1: HACS (Recommended)
+Known limits include unverified ARM64 native-runtime behavior on real Home Assistant hardware, device-specific RGB/effect semantics, and unresolved eco/Watercare setpoint behavior. Automated tests cannot establish physical spa behavior.
 
-1. Open **HACS** in Home Assistant
-2. Navigate to **Integrations**
-3. Click the **⋮** menu (top right) → **Custom repositories**
-4. Add repository URL: `https://github.com/geckoal/ha-gecko-integration`
-5. Select category: **Integration**
-6. Click **Download** on the Gecko integration
-7. **Restart Home Assistant**
+## Community acknowledgements
 
-### Method 2: Manual Installation
+Thank you to the authors whose pull requests and fork work were incorporated or adapted:
 
-1. Download the [latest release](https://github.com/geckoal/ha-gecko-integration/releases)
-2. Extract and copy the `custom_components/gecko` folder to your Home Assistant `custom_components` directory
-3. Your directory structure should look like:
-   ```
-   config/
-   └── custom_components/
-       └── gecko/
-           ├── __init__.py
-           ├── manifest.json
-           └── ...
-   ```
-4. **Restart Home Assistant**
+| Contributor | Incorporated work |
+| --- | --- |
+| @lacroixdavid1 | [PRs 63/64](https://github.com/geckoal/ha-gecko-integration/pull/64): reconnect cleanup, current-zone rebinding, missing-speed handling, regression tests; low-first two-speed startup from their fork. |
+| @oczek | [PR 54](https://github.com/geckoal/ha-gecko-integration/pull/54): standard Home Assistant OAuth callback dependency. |
+| @LogixDE | [PRs 56](https://github.com/geckoal/ha-gecko-integration/pull/56), [57](https://github.com/geckoal/ha-gecko-integration/pull/57), [60](https://github.com/geckoal/ha-gecko-integration/pull/60) and [client PR 12](https://github.com/geckoal/gecko-iot-client/pull/12): eco/heat-pump attributes, RGB work and HVAC status; fork watercare presets, readable flow status and passive-cooling correction. |
+| @shieldwed | [PR 32](https://github.com/geckoal/ha-gecko-integration/pull/32): pump initiator attribution. |
+| @karlg100 | [PR 37](https://github.com/geckoal/ha-gecko-integration/pull/37): telemetry, diagnostics, stable discovery, sparse-state handling, pump interpretation and tests. |
+| @jpwoodnet-boop | [Client PR 11](https://github.com/geckoal/gecko-iot-client/pull/11): preserving speed configuration separately from runtime state. |
+| @cwm12345 | [Client PR 13](https://github.com/geckoal/gecko-iot-client/pull/13): normalizing Super Savings mode names. |
+| @nmonteleone18 | [Fork](https://github.com/nmonteleone18/ha-gecko-integration): RGB hue/brightness normalization helpers. |
+| @markus-lassfolk | [Fork](https://github.com/markus-lassfolk/hass_gecko_in_touch3_spa): Waterlab cloud reading shapes/endpoints, reported extension discovery and temperature/heat sensor ideas. |
 
----
+These changes were reviewed, combined and in several cases repaired rather than merged verbatim. The review documents record the scope and deferred work. Thanks also to everyone who supplied issues, logs, testing and public forks, and to earlier contributors whose work is already in the official baseline.
 
-## ⚙️ Setup & Configuration
+## Source and licensing
 
-### Initial Setup
-
-1. Go to **Settings** → **Devices & Services**
-2. Click **+ Add Integration**
-3. Search for **"Gecko"**
-4. Click on the Gecko integration
-
-### Authentication
-
-The integration will guide you through OAuth2 authentication:
-
-1. Click **Continue** to begin the OAuth flow
-2. You'll be redirected to the Gecko login page
-3. Enter your **Gecko spa account credentials**
-4. Grant permission to Home Assistant
-5. You'll be redirected back automatically
-
-### Automatic Discovery
-
-Once authenticated:
-- Your spa(s) will be **automatically discovered**
-- All available entities will be created
-- Devices appear under **Settings** → **Devices & Services** → **Gecko**
-
----
-
-## 🎛️ Available Entities
-
-The integration creates multiple entity types for comprehensive spa control:
-
-| Entity Type | Description | Example |
-|------------|-------------|---------|
-| **Climate** | Temperature control and monitoring | Set spa to 104°F (40°C) |
-| **Light** | LED lighting control with brightness | Adjust ambient lighting |
-| **Fan** | Pump and blower speed control | Set pump to High speed |
-| **Binary Sensor** | On/off status indicators | Gateway connected status |
-| **Select** | Mode selection (watercare, presets) | Switch to Energy Savings mode |
-
-### Entity Examples
-
-**Climate Entity:**
-- `climate.spa_name` - Main temperature control
-
-**Light Entities:**
-- `light.spa_name_zone_1` - Primary lighting zone
-- `light.spa_name_zone_2` - Secondary lighting zone
-
-**Fan Entities:**
-- `fan.spa_name_pump_1` - Main circulation pump
-- `fan.spa_name_pump_2` - Jet pump
-
-**Sensors:**
-- `sensor.spa_name_rf_signal` - Signal strength indicator
-- `sensor.spa_name_status` - Operational status
-
----
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-**Integration not appearing:**
-- Ensure you've restarted Home Assistant after installation
-- Check that the `custom_components/gecko` folder exists
-- Review Home Assistant logs for errors
-
-**OAuth authentication fails:**
-- Verify your Gecko account credentials
-- Check internet connectivity
-- Try clearing browser cache and retry
-
-**No devices discovered:**
-- Confirm your spa is online in the Gecko mobile app
-- Wait 1-2 minutes for discovery to complete
-- Check that your spa uses Gecko in.touch 3 / in.touch 3+ or compatible system
-
-**Entities not updating:**
-- Check RF signal strength sensor (low signal affects updates)
-- Verify gateway connectivity in the Gecko app
-- Restart the integration: **Settings** → **Devices & Services** → **Gecko** → **⋮** → **Reload**
-
----
-
-## 💬 Support & Community
-
-- 🐛 **Report Issues:** [GitHub Issues](https://github.com/geckoal/ha-gecko-integration/issues)
-- 💡 **Feature Requests:** [GitHub Discussions](https://github.com/geckoal/ha-gecko-integration/discussions)
-- 📖 **Documentation:** [Full Docs](https://github.com/geckoal/ha-gecko-integration)
-
----
-
-## 🙏 Credits
-
-The Gecko IoT client is maintained in this repository at `custom_components/gecko/gecko_iot_client` and ships with the integration. No separate Gecko client package or release is required. See [development and source provenance](docs/DEVELOPMENT.md).
-
----
-
-## 📄 License
-
-Copyright © 2025-2026 Gecko Alliance
-
-Licensed under the Apache License 2.0 - see [LICENSE](LICENSE) for details.
-
-> **⚠️ Important:** This software is intended for personal use with Gecko Alliance equipment through Home Assistant. Commercial use or use outside the intended scope may require authorization from Gecko Alliance. See [NOTICE](NOTICE) for trademark information and usage restrictions.
+Gecko Alliance's original integration license and notices are retained in [LICENSE](LICENSE) and [NOTICE](NOTICE). The bundled IoT client retains its [GPL-3.0-or-later license](custom_components/gecko/gecko_iot_client/LICENSE). The distribution includes both sets of source and notices; the root Apache license does not replace the client's GPL license. Gecko trademarks belong to Gecko Alliance.

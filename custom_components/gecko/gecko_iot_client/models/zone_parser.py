@@ -97,7 +97,11 @@ class ZoneConfigurationParser:
                     # Process config values to extract actual values from metadata
                     processed_config = {}
                     for key, value in zone_config.items():
-                        processed_value = _extract_value_from_config(value)
+                        processed_value = (
+                            value if zone_type == ZoneType.FLOW_ZONE and key == "speed"
+                            and isinstance(value, dict) and "minimum" in value and "maximum" in value
+                            else _extract_value_from_config(value)
+                        )
                         if processed_value is not None:  # Only include non-None values
                             processed_config[key] = processed_value
 

@@ -45,4 +45,6 @@ https://github.com/geckoal/gecko-iot-client, commit
 b799e0cef27099b18d87f52be359353d7ec53c1e (v1.0.3).
 Its GPL-3.0-or-later license is preserved in that directory as LICENSE.
 The integration LICENSE continues to describe the integration source.
-Local changes relocate imports and use a bundled source version identifier.
+Local changes relocate imports, identify the bundled source, and repair models,
+command delivery and MQTT configuration. See docs/RESTORATION.md and the README
+for source attribution and community changes.

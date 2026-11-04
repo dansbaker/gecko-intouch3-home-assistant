@@ -18,14 +18,49 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, WATERCARE_SELECTABLE_MODES
 from .coordinator import GeckoVesselCoordinator
-from .entity import GeckoEntityAvailabilityMixin
+from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
 from . import GeckoConfigEntry
 from .gecko_iot_client.models.zone_types import ZoneType
-from .gecko_iot_client.models.temperature_control_zone import TemperatureControlZone
+from .gecko_iot_client.models.temperature_control_zone import TemperatureControlZone, TemperatureControlZoneStatus
 
 _LOGGER = logging.getLogger(__name__)
+
+
+# Maps the device's granular status to Home Assistant's HVACAction.
+# TemperatureControlZoneStatus.HEAT_PUMP_ERROR has no HVACAction
+# equivalent (HVACAction has no "error" value), so it's mapped to IDLE
+# here and surfaced separately instead - see the heat_pump_error extra
+# state attribute below.
+_HVAC_ACTION_BY_STATUS = {
+    TemperatureControlZoneStatus.IDLE: HVACAction.IDLE,
+    TemperatureControlZoneStatus.HEATING: HVACAction.HEATING,
+    TemperatureControlZoneStatus.COOLING: HVACAction.IDLE,
+    TemperatureControlZoneStatus.INVALID: HVACAction.IDLE,
+    TemperatureControlZoneStatus.HEAT_PUMP_HEATING: HVACAction.HEATING,
+    TemperatureControlZoneStatus.HEAT_PUMP_AND_HEATER_HEATING: HVACAction.HEATING,
+    TemperatureControlZoneStatus.HEAT_PUMP_COOLING: HVACAction.COOLING,
+    TemperatureControlZoneStatus.HEAT_PUMP_DEFROSTING: HVACAction.DEFROSTING,
+    TemperatureControlZoneStatus.HEAT_PUMP_ERROR: HVACAction.IDLE,
+}
+
+# Maps the device's granular status to a plain-language heat source,
+# for the heat_source extra state attribute below - lets automations
+# and dashboards distinguish pure electric heating from heat-pump
+# (potentially combined with electric) heating, which HVACAction alone
+# can't express.
+_HEAT_SOURCE_BY_STATUS = {
+    TemperatureControlZoneStatus.IDLE: "none",
+    TemperatureControlZoneStatus.HEATING: "electric",
+    TemperatureControlZoneStatus.COOLING: "none",
+    TemperatureControlZoneStatus.INVALID: "none",
+    TemperatureControlZoneStatus.HEAT_PUMP_HEATING: "heat_pump",
+    TemperatureControlZoneStatus.HEAT_PUMP_AND_HEATER_HEATING: "heat_pump_and_electric",
+    TemperatureControlZoneStatus.HEAT_PUMP_COOLING: "heat_pump",
+    TemperatureControlZoneStatus.HEAT_PUMP_DEFROSTING: "heat_pump",
+    TemperatureControlZoneStatus.HEAT_PUMP_ERROR: "none",
+}
 
 
 async def async_setup_entry(
@@ -74,12 +109,14 @@ async def async_setup_entry(
         )
 
 
-class GeckoClimate(GeckoEntityAvailabilityMixin, CoordinatorEntity[GeckoVesselCoordinator], ClimateEntity):
+class GeckoClimate(GeckoZoneEntityMixin, GeckoEntityAvailabilityMixin, CoordinatorEntity[GeckoVesselCoordinator], ClimateEntity):
     """Representation of a Gecko climate control."""
     
     _attr_has_entity_name = True
+    _zone_type = ZoneType.TEMPERATURE_CONTROL_ZONE
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
-    _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE
+    _attr_supported_features = ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
+    _attr_preset_modes = list(WATERCARE_SELECTABLE_MODES)
     _attr_hvac_modes = [HVACMode.HEAT]
     _attr_hvac_mode = HVACMode.HEAT
     _attr_target_temperature_step = 0.5
@@ -110,21 +147,27 @@ class GeckoClimate(GeckoEntityAvailabilityMixin, CoordinatorEntity[GeckoVesselCo
     
     def _update_from_zone(self) -> None:
         """Update state attributes from zone data."""
-        if self._zone.status:
-            self._attr_hvac_action = (
-                HVACAction.HEATING if self._zone.status.is_heating else HVACAction.IDLE
-            )
-        else:
-            self._attr_hvac_action = HVACAction.IDLE
-        
-        self._attr_current_temperature = self._zone.temperature
-        self._attr_target_temperature = self._zone.target_temperature
-        self._attr_max_temp = self._zone.max_temperature_set_point_c
-        self._attr_min_temp = self._zone.min_temperature_set_point_c
+        zone = self._current_zone()
+        if zone is None:
+            # Not on the current client: keep the last known state.
+            return
+        status = zone.status
+        self._attr_hvac_action = _HVAC_ACTION_BY_STATUS.get(status, HVACAction.IDLE)
+        self._attr_extra_state_attributes = {
+            "eco_mode": zone.mode.eco if zone.mode else None,
+            "device_status": status.name if status is not None else None,
+            "heat_source": _HEAT_SOURCE_BY_STATUS.get(status, "none"),
+            "heat_pump_error": status == TemperatureControlZoneStatus.HEAT_PUMP_ERROR,
+        }
+
+        self._attr_current_temperature = zone.temperature
+        self._attr_target_temperature = zone.target_temperature
+        self._attr_max_temp = zone.max_temperature_set_point_c
+        self._attr_min_temp = zone.min_temperature_set_point_c
         
         _LOGGER.debug(
             "Zone %s: current=%s°C, target=%s°C",
-            self._zone.id,
+            zone.id,
             self._attr_current_temperature,
             self._attr_target_temperature,
         )
@@ -141,10 +184,14 @@ class GeckoClimate(GeckoEntityAvailabilityMixin, CoordinatorEntity[GeckoVesselCo
         if (temperature := kwargs.get("temperature")) is None:
             return
         
+        zone = self._current_zone()
+        if zone is None:
+            _LOGGER.warning("Could not find temperature control zone %s", self._zone.id)
+            return
         try:
             # set_target_temperature is a synchronous method, run in executor
-            await self.hass.async_add_executor_job(
-                self._zone.set_target_temperature, temperature
+            await self._async_zone_command(
+                zone.set_target_temperature, temperature
             )
           
             _LOGGER.debug(
@@ -153,10 +200,40 @@ class GeckoClimate(GeckoEntityAvailabilityMixin, CoordinatorEntity[GeckoVesselCo
                 self.entity_id,
             )
         except Exception as err:
-            _LOGGER.error(
-                "Error setting temperature for %s: %s", self.entity_id, err
-            )
+            _LOGGER.error("Error setting temperature for %s: %s", self.entity_id, err)
+            raise
     
+    @property
+    def preset_mode(self) -> str | None:
+        """Return the current watercare mode."""
+        gecko_client = self._get_gecko_client_sync()
+        controller = getattr(gecko_client, "operation_mode_controller", None)
+        if controller is None:
+            return None
+        mode_name = controller.mode_name
+        return mode_name if mode_name in WATERCARE_SELECTABLE_MODES else None
+
+
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Set the watercare mode."""
+        if preset_mode not in WATERCARE_SELECTABLE_MODES:
+            raise ServiceValidationError(
+                f"Unsupported preset mode: {preset_mode}",
+                translation_domain=DOMAIN,
+                translation_key="unsupported_preset_mode",
+            )
+
+        gecko_client = await self.coordinator.get_gecko_client()
+        controller = getattr(gecko_client, "operation_mode_controller", None)
+        if controller is None:
+            raise ServiceValidationError("Watercare mode cannot be set while the spa is disconnected")
+
+        # Publishing blocks until MQTT delivery is confirmed: keep it off the loop.
+        await self._async_zone_command(controller.set_mode_by_name, preset_mode)
+        _LOGGER.debug("Set watercare mode to %s for %s", preset_mode, self.entity_id)
+        await self.coordinator.async_request_refresh()
+
+
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         if hvac_mode != HVACMode.HEAT:

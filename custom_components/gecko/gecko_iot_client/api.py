@@ -154,3 +154,11 @@ class GeckoApiClient(ABC):
         )
         _LOGGER.debug("Fetched livestream data")
         return livestream_data
+
+    async def async_get_spa_configuration(self, account_id: str, monitor_id: str) -> dict[str, Any]:
+        """Read the monitor configuration exposed by Gecko."""
+        return await self.async_request("GET", f"/v4/accounts/{account_id}/monitors/{monitor_id}/spa/configuration")
+
+    async def async_get_vessel_detail(self, account_id: str, vessel_id: str) -> dict[str, Any]:
+        """Read Waterlab readings using the existing account authorization."""
+        return await self.async_request("GET", f"/v6/accounts/{account_id}/vessels/{vessel_id}?customActionsVersion=0")

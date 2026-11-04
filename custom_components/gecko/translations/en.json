@@ -1,0 +1,86 @@
+{
+  "config": {
+    "step": {
+      "pick_implementation": {
+        "title": "[%key:common::config_flow::title::oauth2_pick_implementation%]"
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with Gecko",
+        "description": "Your Gecko authentication has expired. Please re-authenticate to restore connectivity."
+      }
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
+      "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
+      "oauth_error": "[%key:common::config_flow::abort::oauth2_error%]",
+      "oauth_failed": "[%key:common::config_flow::abort::oauth2_failed%]",
+      "oauth_timeout": "[%key:common::config_flow::abort::oauth2_timeout%]",
+      "oauth_unauthorized": "[%key:common::config_flow::abort::oauth2_unauthorized%]",
+      "missing_configuration": "[%key:common::config_flow::abort::oauth2_missing_configuration%]",
+      "authorize_url_timeout": "[%key:common::config_flow::abort::oauth2_authorize_url_timeout%]",
+      "no_url_available": "[%key:common::config_flow::abort::oauth2_no_url_available%]",
+      "user_rejected_authorize": "[%key:common::config_flow::abort::oauth2_user_rejected_authorize%]",
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
+      "api_error": "Failed to connect to the Gecko API. Please try again later.",
+      "wrong_account": "Sign in with the same Gecko account as this integration."
+    },
+    "create_entry": {
+      "default": "[%key:common::config_flow::create_entry::authenticated%]"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "rf_signal_strength": {
+        "name": "RF Signal Strength"
+      },
+      "rf_channel": {
+        "name": "RF Channel"
+      },
+      "pack_configuration": {
+        "name": "Pack Configuration"
+      },
+      "home_firmware_version": {
+        "name": "Home (EN) Firmware Version"
+      },
+      "home_serial_number": {
+        "name": "Home (EN) Serial Number"
+      },
+      "spa_firmware_version": {
+        "name": "Spa (CO) Firmware Version"
+      },
+      "spa_serial_number": {
+        "name": "Spa (CO) Serial Number"
+      },
+      "raw_api_data": {
+        "name": "Raw API Data"
+      },
+      "gateway_status": {
+        "name": "Gateway Status"
+      },
+      "vessel_status": {
+        "name": "Spa Status"
+      },
+      "flow_status": {
+        "name": "Flow Status",
+        "state": {
+          "ok": "OK",
+          "flow_check": "Flow check in progress",
+          "other": "Other (see raw_code)"
+        }
+      }
+    },
+    "select": {
+      "watercare_mode": {
+        "name": "Watercare Mode",
+        "state": {
+          "away": "Away",
+          "standard": "Standard",
+          "savings": "Savings",
+          "super_savings": "Super Savings",
+          "weekender": "Weekender",
+          "other": "Other"
+        }
+      }
+    }
+  }
+}

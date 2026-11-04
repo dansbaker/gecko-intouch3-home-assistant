@@ -85,9 +85,10 @@ class TestPublishConfirmation(unittest.TestCase):
         with patch.object(future, "result", side_effect=TimeoutError()):
             with patch.object(self.client._logger, "error") as mock_error:
                 with patch.object(self.client._logger, "info") as mock_info:
-                    zone_callback(
-                        "temperature_control", "1", {"target_temperature": 38}
-                    )
+                    with self.assertRaises(TimeoutError):
+                        zone_callback(
+                            "temperature_control", "1", {"target_temperature": 38}
+                        )
 
         # Verify timeout error was logged
         mock_error.assert_called_once_with(
@@ -116,7 +117,8 @@ class TestPublishConfirmation(unittest.TestCase):
 
         with patch.object(self.client._logger, "error") as mock_error:
             with patch.object(self.client._logger, "info") as mock_info:
-                zone_callback("temperature_control", "1", {"target_temperature": 38})
+                with self.assertRaises(ConnectionError):
+                    zone_callback("temperature_control", "1", {"target_temperature": 38})
 
         # Verify error was logged
         mock_error.assert_called_once_with(
@@ -139,7 +141,8 @@ class TestPublishConfirmation(unittest.TestCase):
         zone_callback = self.mock_zone.set_publish_callback.call_args[0][0]
 
         with patch.object(self.client._logger, "error") as mock_error:
-            zone_callback("temperature_control", "1", {"target_temperature": 38})
+            with self.assertRaises(ConnectionError):
+                zone_callback("temperature_control", "1", {"target_temperature": 38})
 
         # Verify not-connected error was logged
         mock_error.assert_called_once_with(
@@ -188,7 +191,8 @@ class TestPublishConfirmation(unittest.TestCase):
 
         with patch.object(future, "result", side_effect=TimeoutError()):
             with patch.object(self.client._logger, "error") as mock_error:
-                feature_callback("operationMode", {"operationMode": 2})
+                with self.assertRaises(TimeoutError):
+                    feature_callback("operationMode", {"operationMode": 2})
 
         mock_error.assert_called_once_with(
             "❌ Publish timed out for operationMode — message may not have been delivered"

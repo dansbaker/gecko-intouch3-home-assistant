@@ -74,7 +74,6 @@ class AwsCompatibilityTests(unittest.TestCase):
             )
         )
 
-        self.assertEqual(manifest["version"], "2.1.1")
         self.assertIn("awscrt==0.36.1", manifest["requirements"])
         self.assertIn("awsiotsdk==1.31.0", manifest["requirements"])
 

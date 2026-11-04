@@ -48,6 +48,7 @@ class OperationModeController:
                 self._logger.error(
                     f"Failed to publish desired state for operation mode: {e}"
                 )
+                raise
         else:
             self._logger.error(
                 "No publish callback set for operation mode - cannot publish desired state"
@@ -160,7 +161,7 @@ class OperationModeController:
         Raises:
             ValueError: If mode name is not recognized
         """
-        mode_name_upper = mode_name.upper()
+        mode_name_upper = mode_name.strip().upper().replace(" ", "_")
 
         # Map common names to enum values
         name_mapping = {

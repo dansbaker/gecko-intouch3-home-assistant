@@ -1,5 +1,8 @@
 
 import logging
+from aiohttp import ClientResponseError
+from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.config_entry_oauth2_flow import OAuth2TokenRequestError
 
 from homeassistant.helpers import config_entry_oauth2_flow
 from homeassistant.core import HomeAssistant
@@ -28,8 +31,22 @@ class OAuthGeckoApi(GeckoApiClient):
 
     async def async_get_access_token(self) -> str:
         """Return a valid access token for the Gecko API."""
-        await self._oauth_session.async_ensure_token_valid()
-        return self._oauth_session.token["access_token"]
+        if not self._oauth_session.token.get("refresh_token"):
+            raise ConfigEntryAuthFailed("Missing refresh token; please re-authenticate Gecko")
+        try:
+            await self._oauth_session.async_ensure_token_valid()
+        except OAuth2TokenRequestError as err:
+            if err.status in (400, 401, 403):
+                raise ConfigEntryAuthFailed("Gecko login expired; please re-authenticate") from err
+            raise
+        except ClientResponseError as err:
+            if err.status in (401, 403):
+                raise ConfigEntryAuthFailed("Gecko login expired; please re-authenticate") from err
+            raise
+        token = self._oauth_session.token.get("access_token")
+        if not token:
+            raise ConfigEntryAuthFailed("Missing access token; please re-authenticate Gecko")
+        return token
     
 class ConfigFlowGeckoApi(GeckoApiClient):
     """Profile gecko authentication before a ConfigEntry exists.

@@ -1,0 +1,362 @@
+{
+  "reviewed_at": "2026-11-04",
+  "official_baseline": "aaf94de",
+  "forks": [
+    {
+      "repository": "LogixDE/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/feature/all-in-one",
+          "head": "e31eb9256509e3cafd1e7a35aeaa8269eaa29a4f"
+        },
+        {
+          "branch": "origin/feature/climate-eco-mode-attribute",
+          "head": "9a64baec5612b1ea7e06027d2bdf035ccddac4e4"
+        },
+        {
+          "branch": "origin/feature/heat-pump-status-attributes",
+          "head": "38e14e84d4084e690bf56dfcda823e112cb2711c"
+        },
+        {
+          "branch": "origin/feature/light-rgb-color-support-v2",
+          "head": "bc5ab632793b932751eb3ca6bc9bb31238047eb8"
+        },
+        {
+          "branch": "origin/main",
+          "head": "e31eb9256509e3cafd1e7a35aeaa8269eaa29a4f"
+        }
+      ]
+    },
+    {
+      "repository": "Zuntara/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/bugfix/fix-entities",
+          "head": "1c26a3446545915c0fd5b27e3f0376e314843512"
+        },
+        {
+          "branch": "origin/main",
+          "head": "f5159c0782727bb6775b54af194b834b0cf2f2e7"
+        }
+      ]
+    },
+    {
+      "repository": "dansbaker/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/fix/offline-access-scope",
+          "head": "6974dc207c996d973c9c4e02959966b322c7ef5e"
+        },
+        {
+          "branch": "origin/fix/preserve-refresh-token-reauth",
+          "head": "d9164574a8b6ae863044154d1cfbd983e312a23e"
+        },
+        {
+          "branch": "origin/main",
+          "head": "8c8d01adfbb3b42caf144d3c9d4cabd7d67e2c8f"
+        }
+      ]
+    },
+    {
+      "repository": "dk1/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/codex/perform-full-code-review",
+          "head": "1847fe1235ff5686c0498a56b54acbe276a4ed5c"
+        },
+        {
+          "branch": "origin/debounce-unavailable-transition",
+          "head": "b0efd053c48ff474b4b5669da77e0a3ecf36957a"
+        },
+        {
+          "branch": "origin/fix/python-3-14-awscrt-crash",
+          "head": "bfafa5842ca171ff1f227f368f4005624c225dbe"
+        },
+        {
+          "branch": "origin/fix/python-3-14-awscrt-upstream",
+          "head": "419c64752e118a91ff0b78812584e9cdf9d64bd4"
+        },
+        {
+          "branch": "origin/main",
+          "head": "7041b7e61a186141c1ccdd7ac0684215176fa0e5"
+        },
+        {
+          "branch": "origin/upstream/python-3-14-awscrt-crash",
+          "head": "0bef17a19872179aa76a384836ff27f21c3a5b75"
+        }
+      ]
+    },
+    {
+      "repository": "f1rstxlas7/hass_gecko_in_touch3_spa",
+      "branches": [
+        {
+          "branch": "origin/main",
+          "head": "cc493d7ab7e3ad5c1d18f45bda6ad3b3d12c856c"
+        }
+      ]
+    },
+    {
+      "repository": "jamietre/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/main",
+          "head": "242d96e1a4d270d208c2d364c7360b72783871f2"
+        }
+      ]
+    },
+    {
+      "repository": "jodewee/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/main",
+          "head": "7041b7e61a186141c1ccdd7ac0684215176fa0e5"
+        }
+      ]
+    },
+    {
+      "repository": "karlg100/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/codex/perform-full-code-review",
+          "head": "1847fe1235ff5686c0498a56b54acbe276a4ed5c"
+        },
+        {
+          "branch": "origin/fix/python-3-14-awscrt-crash",
+          "head": "bfafa5842ca171ff1f227f368f4005624c225dbe"
+        },
+        {
+          "branch": "origin/fix/python-3-14-awscrt-upstream",
+          "head": "419c64752e118a91ff0b78812584e9cdf9d64bd4"
+        },
+        {
+          "branch": "origin/main",
+          "head": "7041b7e61a186141c1ccdd7ac0684215176fa0e5"
+        },
+        {
+          "branch": "origin/upstream/python-3-14-awscrt-crash",
+          "head": "0bef17a19872179aa76a384836ff27f21c3a5b75"
+        }
+      ]
+    },
+    {
+      "repository": "lacroixdavid1/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/alex-reid-gecko-patch-1",
+          "head": "7d45897045b99f29f0b7b493c231d4a8052dda3e"
+        },
+        {
+          "branch": "origin/alex-reid-gecko/issue1",
+          "head": "60e402b152b27d51efd28fd80c7f85d2c3c15fa1"
+        },
+        {
+          "branch": "origin/feat/ha-best-practices",
+          "head": "2783afed4f61d5f59b92b431b1ebed4d9b12ed57"
+        },
+        {
+          "branch": "origin/feat/two-speed-pump",
+          "head": "b816540ae105eda4b0fd7096e76d16d1f128e53e"
+        },
+        {
+          "branch": "origin/fix/#1_support_waterfall_and_blower",
+          "head": "72ad713e406def6b7b7a33a7862021bce71a9c41"
+        },
+        {
+          "branch": "origin/fix/#4_ensure_disonnection_on_reload",
+          "head": "f1ca43164c4a34a2e24c94546c6e3e838066004c"
+        },
+        {
+          "branch": "origin/fix/#8_add_missing_hvac_setter",
+          "head": "1e4f258c0959357e480bb77f74b92149c34a3b60"
+        },
+        {
+          "branch": "origin/fix/fan-speed-unset",
+          "head": "15f39ec59231dab1320ed6c1159820b7e7015a42"
+        },
+        {
+          "branch": "origin/fix/improve-config-retreive",
+          "head": "19246bb7fdbdb406ac5cd1f06d83de22e39f0d39"
+        },
+        {
+          "branch": "origin/fix/reconnect-stale-zones",
+          "head": "cda419fd2c4378a1488962fa4dbc8111f6aac6fd"
+        },
+        {
+          "branch": "origin/fix/stability",
+          "head": "5082c88885c7ea449f65d135966771a8a3462953"
+        },
+        {
+          "branch": "origin/lacroix",
+          "head": "86113e025c5673affe5442b1b00f162e15d79fd3"
+        },
+        {
+          "branch": "origin/main",
+          "head": "aaf94def7aed78fd653b5dff498b4cf93299f901"
+        },
+        {
+          "branch": "origin/refactor/remove-hasattr-type-guards",
+          "head": "b34fd251cb8b52af1bd151f89e47b99f6079df94"
+        }
+      ]
+    },
+    {
+      "repository": "manuelkleinert/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/main",
+          "head": "6612107045187b688c035e46e062081de1fbaa8a"
+        }
+      ]
+    },
+    {
+      "repository": "markus-lassfolk/hass_gecko_in_touch3_spa",
+      "branches": [
+        {
+          "branch": "origin/feature/gecko-diagnostics-temp-safety-reconnect",
+          "head": "884ec4a56e7304657837142f2ebbd5c23b31cc27"
+        },
+        {
+          "branch": "origin/main",
+          "head": "cc493d7ab7e3ad5c1d18f45bda6ad3b3d12c856c"
+        }
+      ]
+    },
+    {
+      "repository": "nmonteleone18/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/main",
+          "head": "fa7b572ab3dc3d7312bb7eb5f2793aaf41b0c57c"
+        }
+      ]
+    },
+    {
+      "repository": "oczek/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/alex-reid-gecko-patch-1",
+          "head": "7d45897045b99f29f0b7b493c231d4a8052dda3e"
+        },
+        {
+          "branch": "origin/alex-reid-gecko/issue1",
+          "head": "60e402b152b27d51efd28fd80c7f85d2c3c15fa1"
+        },
+        {
+          "branch": "origin/feat/ha-best-practices",
+          "head": "2783afed4f61d5f59b92b431b1ebed4d9b12ed57"
+        },
+        {
+          "branch": "origin/fix-oauth-callback-mismatch",
+          "head": "ba637f6e6c51fdbde6f4e52fdcd5f27b1d84d3c1"
+        },
+        {
+          "branch": "origin/fix/#1_support_waterfall_and_blower",
+          "head": "72ad713e406def6b7b7a33a7862021bce71a9c41"
+        },
+        {
+          "branch": "origin/fix/#4_ensure_disonnection_on_reload",
+          "head": "f1ca43164c4a34a2e24c94546c6e3e838066004c"
+        },
+        {
+          "branch": "origin/fix/#8_add_missing_hvac_setter",
+          "head": "1e4f258c0959357e480bb77f74b92149c34a3b60"
+        },
+        {
+          "branch": "origin/fix/improve-config-retreive",
+          "head": "19246bb7fdbdb406ac5cd1f06d83de22e39f0d39"
+        },
+        {
+          "branch": "origin/fix/stability",
+          "head": "5082c88885c7ea449f65d135966771a8a3462953"
+        },
+        {
+          "branch": "origin/main",
+          "head": "5b6a93d57bd134200829e5f4248eaef3ac58843e"
+        },
+        {
+          "branch": "origin/refactor/remove-hasattr-type-guards",
+          "head": "b34fd251cb8b52af1bd151f89e47b99f6079df94"
+        }
+      ]
+    },
+    {
+      "repository": "shieldwed/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/feat/add_initiators_attribute",
+          "head": "9e361bcbc8ede93c812f485c22a259056150986a"
+        },
+        {
+          "branch": "origin/feat/colorful_light",
+          "head": "34b1574798869f4631f27c5ba362b274301fa404"
+        },
+        {
+          "branch": "origin/feat/rainbow_effect",
+          "head": "427f41329d569a7a24634e859c5db2dbbfe8963d"
+        },
+        {
+          "branch": "origin/light_mk",
+          "head": "6de07403f6c0742971c4d664776701a36f1cb313"
+        },
+        {
+          "branch": "origin/main",
+          "head": "c18c4b28e13c982d7d54ebc9dd21f8f42d2061ad"
+        }
+      ]
+    },
+    {
+      "repository": "springerigor/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/main",
+          "head": "5b6a93d57bd134200829e5f4248eaef3ac58843e"
+        }
+      ]
+    },
+    {
+      "repository": "thaynes43/ha-gecko-integration",
+      "branches": [
+        {
+          "branch": "origin/alex-reid-gecko-patch-1",
+          "head": "7d45897045b99f29f0b7b493c231d4a8052dda3e"
+        },
+        {
+          "branch": "origin/alex-reid-gecko/issue1",
+          "head": "60e402b152b27d51efd28fd80c7f85d2c3c15fa1"
+        },
+        {
+          "branch": "origin/feat/ha-best-practices",
+          "head": "2783afed4f61d5f59b92b431b1ebed4d9b12ed57"
+        },
+        {
+          "branch": "origin/fix/#1_support_waterfall_and_blower",
+          "head": "72ad713e406def6b7b7a33a7862021bce71a9c41"
+        },
+        {
+          "branch": "origin/fix/#4_ensure_disonnection_on_reload",
+          "head": "f1ca43164c4a34a2e24c94546c6e3e838066004c"
+        },
+        {
+          "branch": "origin/fix/#8_add_missing_hvac_setter",
+          "head": "1e4f258c0959357e480bb77f74b92149c34a3b60"
+        },
+        {
+          "branch": "origin/fix/improve-config-retreive",
+          "head": "19246bb7fdbdb406ac5cd1f06d83de22e39f0d39"
+        },
+        {
+          "branch": "origin/fix/stability",
+          "head": "5082c88885c7ea449f65d135966771a8a3462953"
+        },
+        {
+          "branch": "origin/main",
+          "head": "5b6a93d57bd134200829e5f4248eaef3ac58843e"
+        },
+        {
+          "branch": "origin/refactor/remove-hasattr-type-guards",
+          "head": "b34fd251cb8b52af1bd151f89e47b99f6079df94"
+        }
+      ]
+    }
+  ]
+}

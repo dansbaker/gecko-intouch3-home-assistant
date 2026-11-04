@@ -5,8 +5,10 @@ from __future__ import annotations
 import logging
 
 from .gecko_iot_client.models.events import EventChannel
+from .gecko_iot_client.models.zone_types import AbstractZone, ZoneType
 from .gecko_iot_client import GeckoIotClient
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from .coordinator import GeckoVesselCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,31 +32,32 @@ class GeckoEntityAvailabilityMixin:
         replaced (e.g., after reconnection).
         """
         self._ensure_callback_registered()
+        self._update_availability()
         return self._attr_available
 
     def _ensure_callback_registered(self) -> None:
         """Ensure the connectivity callback is registered on the current gecko_client.
-        
+
         After reconnection, the connection manager replaces the gecko_client instance.
         This method detects that and re-registers the callback on the new client.
         """
-        if not self._connectivity_callback_registered:
-            return
-        
         current_client = self._get_gecko_client_sync()
-        if current_client and current_client is not self._registered_gecko_client:
-            # Client was replaced (reconnection happened) — re-register
-            if self._registered_gecko_client:
-                try:
-                    self._registered_gecko_client.off(
-                        EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update
-                    )
-                except Exception:
-                    pass  # Old client may be disposed
+        if not current_client or current_client is self._registered_gecko_client:
+            return
 
-            current_client.on(EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update)
-            self._registered_gecko_client = current_client
-            _LOGGER.debug("Re-registered connectivity callback on new gecko_client")
+        # Client was replaced (reconnection happened) — re-register
+        if self._registered_gecko_client:
+            try:
+                self._registered_gecko_client.off(
+                    EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update
+                )
+            except Exception:
+                pass  # Old client may be disposed
+
+        current_client.on(EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update)
+        self._registered_gecko_client = current_client
+        self._connectivity_callback_registered = True
+        _LOGGER.debug("Re-registered connectivity callback on new gecko_client")
 
     async def async_added_to_hass(self) -> None:
         """Register for connectivity updates when entity is added to hass."""
@@ -72,7 +75,10 @@ class GeckoEntityAvailabilityMixin:
         if register == self._connectivity_callback_registered:
             return
 
-        gecko_client = await self.coordinator.get_gecko_client()
+        # Register even while the transport is down. The connection manager keeps
+        # the client instance, and this callback is what lets the entity recover
+        # automatically when connectivity returns.
+        gecko_client = self._get_gecko_client_sync() if register else self._registered_gecko_client
         if not gecko_client:
             return
 
@@ -107,17 +113,20 @@ class GeckoEntityAvailabilityMixin:
             )
 
     def _update_availability(self) -> None:
-        """Update availability from gecko_iot_client's is_connected property."""
+        """Update availability from the retained connection snapshot."""
         new_availability = self._check_is_connected()
         self._attr_available = new_availability
 
     def _check_is_connected(self) -> bool:
-        """Check if gecko_iot_client is connected."""
-        gecko_client = self._get_gecko_client_sync()
-        if not gecko_client:
+        """Check if the transport, gateway, and vessel are connected."""
+        from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
+
+        connection_manager = self.hass.data.get(GECKO_CONNECTION_MANAGER_KEY)
+        if not connection_manager:
             return False
-        
-        return gecko_client.is_connected
+
+        connection = connection_manager.get_connection(self.coordinator.monitor_id)
+        return connection.is_fully_connected if connection else False
 
     def _get_gecko_client_sync(self) -> GeckoIotClient | None:
         """Get gecko client synchronously from connection manager."""
@@ -130,3 +139,48 @@ class GeckoEntityAvailabilityMixin:
         connection = connection_manager._connections.get(self.coordinator.monitor_id)
         return connection.gecko_client if connection else None
 
+
+class GeckoZoneEntityMixin:
+    """Resolve an entity's zone on the current gecko client, by zone id.
+
+    A reconnect replaces the GeckoIotClient, and the new client builds new
+    zone objects. The zone object an entity was created with then belongs to
+    a client that is no longer connected: reading it freezes the entity at
+    its last state, and commanding it publishes through a dead transport.
+    GeckoLight and GeckoFan.async_set_speed already looked their zone up on
+    every call; this gives the other zone entities the same rule.
+    """
+
+    coordinator: GeckoVesselCoordinator
+    _zone: AbstractZone
+    _zone_type: ZoneType
+
+    @property
+    def available(self):
+        return super().available and self._current_zone() is not None
+
+    async def _async_zone_command(self, method, *args):
+        """Keep MQTT waits off the loop and surface delivery errors to HA."""
+        try:
+            return await self.hass.async_add_executor_job(method, *args)
+        except (OSError, RuntimeError, ValueError) as err:
+            raise HomeAssistantError(str(err)) from err
+
+    def _current_zone(self) -> AbstractZone | None:
+        """Return this entity's zone on the current client, and rebind to it.
+
+        Returns None when the current client has no zone with this id. Callers
+        then keep the last known state and refuse to command, rather than fall
+        back to the replaced client's object.
+        """
+        zone = next(
+            (
+                candidate
+                for candidate in self.coordinator.get_zones_by_type(self._zone_type)
+                if str(candidate.id) == str(self._zone.id)
+            ),
+            None,
+        )
+        if zone is not None:
+            self._zone = zone
+        return zone

@@ -134,9 +134,9 @@ class LightingZone(AbstractZone):
             ValueError: If any component is outside the 0-255 range
         """
         rgb_color = RGB(r=r, g=g, b=b, i=i)
+        self._publish_desired_state({"rgbi": [r, g, b, i if i is not None else 1], "active": True})
         self.rgbi = rgb_color
         self.active = True
-        self._publish_desired_state({"rgbi": rgb_color, "active": True})
 
     def _get_runtime_state_fields(self) -> set:
         """
@@ -197,9 +197,9 @@ class LightingZone(AbstractZone):
             ValueError: If effect name is not between 1 and 50 characters
         """
         self._validate_effect_name(effect_name)
+        self._publish_desired_state({"effect": effect_name, "active": True})
         self.effect = effect_name
         self.active = True
-        self._publish_desired_state({"effect": effect_name, "active": True})
 
     def activate(self) -> None:
         """Activate this lighting zone."""

@@ -60,6 +60,7 @@ class AbstractZone:
                 self._publish_callback(self.zone_type.value, self.id, updates)
             except Exception as e:
                 logger.error(f"Failed to publish desired state for zone {self.id}: {e}")
+                raise
         else:
             logger.warning(
                 f"No publish callback set for zone {self.id} - cannot publish desired state"

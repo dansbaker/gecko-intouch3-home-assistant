@@ -142,3 +142,7 @@ This review does not change the integration domain, OAuth client identity, repos
 | 60 | `38e14e84d4084e690bf56dfcda823e112cb2711c` |
 | 63 | `cda419fd2c4378a1488962fa4dbc8111f6aac6fd` |
 | 64 | `15f39ec59231dab1320ed6c1159820b7e7015a42` |
+
+## Restoration implementation follow-up
+
+The decisions above record the initial review, before repairs. The subsequent local restoration incorporates the accepted parts and repaired adaptations of PRs 32/37/57 rather than leaving their useful changes on hold. [RESTORATION.md](RESTORATION.md) records the final implementation; [FORK_REVIEW.md](FORK_REVIEW.md) records all 16 public forks. In particular, passive `COOLING` status is now idle in HA following Logix's later fork correction; active heat-pump cooling remains cooling. Hardware-specific limitations and unresolved eco-setpoint reports remain open.

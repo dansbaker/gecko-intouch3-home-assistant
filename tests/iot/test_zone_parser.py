@@ -107,7 +107,7 @@ class TestZoneConfigurationParser(unittest.TestCase):
         zone2 = flow_zones[1]
         self.assertEqual(zone2.id, "2")
         self.assertEqual(zone2.name, "Flow Zone 2")
-        self.assertEqual(zone2.speed, 0.0)  # Should use minimum
+        self.assertIsNone(zone2.speed)  # Capability minimum is not a reported speed
         self.assertFalse(zone2.active)
 
     def test_parse_lighting_zones(self):

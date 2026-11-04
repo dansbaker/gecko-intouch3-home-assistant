@@ -101,7 +101,8 @@ class MqttClient:
                 auth_authorizer_signature=auth_params["signature"],
                 client_id=client_id,
                 clean_start=True,
-                keep_alive_secs=30,
+                keep_alive_interval_sec=60,
+                ping_timeout_ms=10000,
                 on_lifecycle_connection_success=self._on_connection_success,
                 on_lifecycle_connection_failure=self._on_connection_failure,
                 on_lifecycle_disconnection=self._on_disconnection,
@@ -137,7 +138,7 @@ class MqttClient:
     def disconnect(self) -> None:
         """Disconnect from broker (intentional disconnect)."""
         with self._lock:
-            if not self._connected or not self._client:
+            if not self._client:
                 return
             self._intentional_disconnect = True
             client = self._client
