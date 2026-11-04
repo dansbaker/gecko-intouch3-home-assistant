@@ -1,0 +1,4 @@
+# Home Assistant 2026.9.4 and its test harness.
+pytest-homeassistant-custom-component==0.13.367
+awscrt==0.36.1
+awsiotsdk==1.31.0

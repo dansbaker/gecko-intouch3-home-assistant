@@ -37,3 +37,12 @@ Gecko Alliance - https://www.geckoalliance.com
 
 Third-party dependencies are listed in the manifest.json file and are subject
 to their own licenses.
+
+BUNDLED GECKO IOT CLIENT
+
+The client under custom_components/gecko/gecko_iot_client originates from
+https://github.com/geckoal/gecko-iot-client, commit
+b799e0cef27099b18d87f52be359353d7ec53c1e (v1.0.3).
+Its GPL-3.0-or-later license is preserved in that directory as LICENSE.
+The integration LICENSE continues to describe the integration source.
+Local changes relocate imports and use a bundled source version identifier.

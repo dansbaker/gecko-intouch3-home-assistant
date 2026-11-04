@@ -13,9 +13,9 @@ from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.helpers.singleton import singleton
 from homeassistant.util.hass_dict import HassKey
 
-from gecko_iot_client.models.events import EventChannel
-from gecko_iot_client import GeckoIotClient
-from gecko_iot_client.transporters.mqtt import MqttTransporter
+from .gecko_iot_client.models.events import EventChannel
+from .gecko_iot_client import GeckoIotClient
+from .gecko_iot_client.transporters.mqtt import MqttTransporter
 
 from .aws_compat import ensure_aws_crt_compatible
 from .const import DOMAIN, CONFIG_TIMEOUT

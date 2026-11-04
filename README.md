@@ -194,7 +194,7 @@ The integration creates multiple entity types for comprehensive spa control:
 
 ## 🙏 Credits
 
-This integration is built with the [gecko-iot-client](https://github.com/geckoal/gecko-iot-client) library.
+The Gecko IoT client is maintained in this repository at `custom_components/gecko/gecko_iot_client` and ships with the integration. No separate Gecko client package or release is required. See [development and source provenance](docs/DEVELOPMENT.md).
 
 ---
 

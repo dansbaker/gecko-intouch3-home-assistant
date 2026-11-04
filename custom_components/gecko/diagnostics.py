@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from gecko_iot_client import GeckoIotClient
-from gecko_iot_client.models.connectivity import ConnectivityStatus
-from gecko_iot_client.models.zone_types import ZoneType
+from .gecko_iot_client import GeckoIotClient
+from .gecko_iot_client.models.connectivity import ConnectivityStatus
+from .gecko_iot_client.models.zone_types import ZoneType
 
 from homeassistant.core import HomeAssistant
 

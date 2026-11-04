@@ -17,7 +17,7 @@ from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin
 from . import GeckoConfigEntry
 
-from gecko_iot_client.models.zone_types import ZoneType
+from .gecko_iot_client.models.zone_types import ZoneType
 
 
 _LOGGER = logging.getLogger(__name__)

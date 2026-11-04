@@ -1,0 +1,23 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements_test.txt
+      - name: Install test dependencies
+        run: pip install -r requirements_test.txt
+      - name: Verify the standalone client is absent
+        run: python -c "import importlib.util; assert importlib.util.find_spec('gecko_iot_client') is None"
+      - name: Run integration and bundled client tests
+        run: python -m pytest

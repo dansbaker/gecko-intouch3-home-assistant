@@ -6,7 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import API_BASE_URL, AUTH0_URL_BASE
-from gecko_iot_client import GeckoApiClient
+from .gecko_iot_client import GeckoApiClient
 from typing import Any
 
 _LOGGER = logging.getLogger(__name__)

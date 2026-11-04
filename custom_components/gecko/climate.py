@@ -22,8 +22,8 @@ from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin
 from . import GeckoConfigEntry
-from gecko_iot_client.models.zone_types import ZoneType
-from gecko_iot_client.models.temperature_control_zone import TemperatureControlZone
+from .gecko_iot_client.models.zone_types import ZoneType
+from .gecko_iot_client.models.temperature_control_zone import TemperatureControlZone
 
 _LOGGER = logging.getLogger(__name__)
 

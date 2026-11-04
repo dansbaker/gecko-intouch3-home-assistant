@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import logging
 
-from gecko_iot_client.models.events import EventChannel
-from gecko_iot_client import GeckoIotClient
+from .gecko_iot_client.models.events import EventChannel
+from .gecko_iot_client import GeckoIotClient
 from homeassistant.core import HomeAssistant
 from .coordinator import GeckoVesselCoordinator
 
