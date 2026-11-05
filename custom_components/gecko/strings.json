@@ -93,5 +93,22 @@
   },
   "application_credentials": {
     "description": "Use OAuth application credentials issued for your Gecko integration. The application must allow Home Assistant's OAuth callback and the Gecko API audience. Contact Gecko for credential access and permissions; a spa account login is not an application credential. Existing custom-integration users may continue using the bundled login."
+  },
+  "exceptions": {
+    "unsupported_watercare_mode": {
+      "message": "The selected watercare mode is not supported."
+    },
+    "watercare_unavailable": {
+      "message": "Watercare control is unavailable. Check the spa connection and try again."
+    },
+    "command_failed": {
+      "message": "The command could not be delivered to the spa. Check the connection and try again."
+    },
+    "unsupported_preset_mode": {
+      "message": "The selected watercare preset is not supported."
+    },
+    "unsupported_hvac_mode": {
+      "message": "This thermostat supports heating mode only."
+    }
   }
 }

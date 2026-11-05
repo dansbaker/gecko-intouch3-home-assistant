@@ -1,7 +1,9 @@
 """Verify a built standalone client in an environment without Home Assistant."""
 
+import json
 from importlib import metadata, util
 from pathlib import Path
+from unittest.mock import Mock
 
 
 def main() -> None:
@@ -55,6 +57,13 @@ def main() -> None:
             }
         },
     )
+    # The public diagnostics API must also work outside Home Assistant.
+    device = client.GeckoIotClient("PRIVATE_MONITOR", Mock())
+    device._zones = zones
+    snapshot = device.diagnostic_snapshot()
+    assert snapshot["zones"]["flow"]["count"] == 1
+    assert snapshot["zones"]["flow"]["samples"][0]["speed"] == 50
+    assert "PRIVATE" not in json.dumps(snapshot, allow_nan=False)
     published = []
     pump = zones[ZoneType.FLOW_ZONE][0]
     pump.set_publish_callback(

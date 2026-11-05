@@ -10,13 +10,18 @@ events a real client would (zone updates, connectivity changes).
 from __future__ import annotations
 
 import copy
+from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Any, Callable
+from typing import Any
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.gecko.gecko_iot_client.models.events import EventChannel
-from custom_components.gecko.gecko_iot_client.models.zone_parser import ZoneConfigurationParser
+from custom_components.gecko.gecko_iot_client.models.zone_parser import (
+    ZoneConfigurationParser,
+)
 
 pytest_plugins = "pytest_homeassistant_custom_component"
 
@@ -173,3 +178,50 @@ def network(monkeypatch) -> FakeNetwork:
     monkeypatch.setattr(connection_manager, "RECONNECT_DELAY", 0)
     monkeypatch.setattr(connection_manager, "TOKEN_REFRESH_DELAY", 0)
     return fake
+
+
+@pytest.fixture
+def account(hass, enable_custom_integrations, network):
+    hass.config.components.add("my")
+    network.next_zones_on_connect = build_zones(
+        {
+            "flow": {"1": {"active": False, "speed": 50}},
+            "lighting": {"1": {"active": False}},
+            "temperatureControl": {
+                "1": {"temperature_": 30, "setPoint": 35, "status_": 0}
+            },
+        }
+    )
+    entry = MockConfigEntry(
+        domain="gecko",
+        data={
+            "account_id": "account",
+            "auth_implementation": "gecko",
+            "token": {
+                "access_token": "access",
+                "refresh_token": "refresh",
+                "expires_at": 9999999999,
+            },
+            "vessels": [{"vesselId": "spa", "monitorId": "monitor", "name": "Spa"}],
+        },
+    )
+    entry.add_to_hass(hass)
+    return entry
+
+
+@pytest.fixture
+def cloud():
+    with (
+        patch(
+            "custom_components.gecko.config_entry_oauth2_flow.async_get_config_entry_implementation",
+            AsyncMock(return_value=Mock()),
+        ),
+        patch("custom_components.gecko.config_entry_oauth2_flow.OAuth2Session"),
+        patch("custom_components.gecko.OAuthGeckoApi", autospec=True) as cls,
+    ):
+        api = cls.return_value
+        api.async_get_monitor_livestream.return_value = {
+            "brokerUrl": "wss://example.com"
+        }
+        api.async_get_vessel_detail.return_value = {}
+        yield api

@@ -34,6 +34,9 @@ from .gecko_iot_client.helpers.telemetry import (
     is_manual_flow_demand,
 )
 
+# Explicit platform concurrency: read-only coordinator push updates.
+PARALLEL_UPDATES = 0
+
 _LOGGER = logging.getLogger(__name__)
 
 BINARY_SENSOR_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (

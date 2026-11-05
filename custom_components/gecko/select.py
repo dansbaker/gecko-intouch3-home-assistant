@@ -1,25 +1,22 @@
-"""Select entities for Gecko spa integration."""
+"""Watercare selection using current reported state and explicit action errors."""
 
 from __future__ import annotations
-
-import logging
-from homeassistant.exceptions import HomeAssistantError
-from typing import Any
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, WATERCARE_MODE_OPTIONS
+from . import GeckoConfigEntry
+from .const import DOMAIN, WATERCARE_SELECTABLE_MODES
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin
-from . import GeckoConfigEntry
 
-_LOGGER = logging.getLogger(__name__)
-
+# Serialize commands on this platform; push reports remain independent.
+PARALLEL_UPDATES = 1
 
 
 async def async_setup_entry(
@@ -27,141 +24,78 @@ async def async_setup_entry(
     entry: GeckoConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Gecko select entities."""
-    _LOGGER.debug("Setting up Gecko select entities")
-    
-    # Get runtime data with per-vessel coordinators
-    runtime_data = entry.runtime_data
-    if not runtime_data or not runtime_data.coordinators:
-        _LOGGER.error("No coordinators found in runtime_data for config entry %s", entry.entry_id)
+    """Add one Watercare selector per current vessel."""
+    runtime = getattr(entry, "runtime_data", None)
+    if runtime is None:
         return
-    
-    entities = []
-    
-    # Create a watercare mode select for each vessel coordinator
-    for coordinator in runtime_data.coordinators:
-        _LOGGER.debug("Creating watercare select for vessel %s (ID: %s)", 
-                     coordinator.vessel_name, coordinator.vessel_id)
-        
-        # Add watercare mode select for each spa/vessel
-        entities.append(
+    async_add_entities(
+        [
             GeckoWatercareSelectEntity(
-                coordinator=coordinator,
-                vessel_name=coordinator.vessel_name,
-                vessel_id=coordinator.vessel_id,
+                coordinator, coordinator.vessel_name, coordinator.vessel_id
             )
-        )
-    
-    if entities:
-        _LOGGER.debug("Adding %d Gecko select entities", len(entities))
-        async_add_entities(entities)
+            for coordinator in runtime.coordinators
+        ]
+    )
 
 
-class GeckoWatercareSelectEntity(GeckoEntityAvailabilityMixin, CoordinatorEntity, SelectEntity):
-    """Representation of a Gecko watercare mode select."""
+class GeckoWatercareSelectEntity(
+    GeckoEntityAvailabilityMixin, CoordinatorEntity, SelectEntity
+):
+    """Control supported modes without treating unknown 'Other' as a command."""
 
     _attr_has_entity_name = True
+    _attr_translation_key = "watercare_mode"
+    _attr_icon = "mdi:hot-tub"
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_options = WATERCARE_SELECTABLE_MODES
 
     def __init__(
-        self,
-        coordinator: GeckoVesselCoordinator,
-        vessel_name: str,
-        vessel_id: str,
+        self, coordinator: GeckoVesselCoordinator, vessel_name: str, vessel_id: str
     ) -> None:
-        """Initialize the select."""
-        SelectEntity.__init__(self)
-        CoordinatorEntity.__init__(self, coordinator)
-
-        self._vessel_name = vessel_name
-        self._vessel_id = vessel_id
-
-        # Set up entity attributes — has_entity_name=True means HA prepends device name
-        self._attr_name = "Watercare Mode"
+        super().__init__(coordinator)
+        # Preserve the existing identifier so automations and registry entries survive.
         self._attr_unique_id = f"{vessel_id}_watercare_mode"
-        self._attr_icon = "mdi:hot-tub"
-        self._attr_entity_category = EntityCategory.CONFIG
-        self._attr_options = WATERCARE_MODE_OPTIONS
-
-        # Device info for grouping entities
-        self._attr_device_info = dr.DeviceInfo(
-            identifiers={(DOMAIN, str(vessel_id))},
-        )
-
-        # Initialize state
+        self._attr_device_info = dr.DeviceInfo(identifiers={(DOMAIN, str(vessel_id))})
         self._attr_current_option = None
-
-        # Initialize availability (will be updated by mixin when added to hass)
         self._attr_available = False
 
+    def _controller(self):
+        return getattr(self._get_gecko_client_sync(), "operation_mode_controller", None)
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._controller() is not None
+
+    @callback
+    def _update_state(self) -> None:
+        controller = self._controller()
+        mode = controller.mode_name if controller is not None else None
+        self._attr_current_option = mode if mode in WATERCARE_SELECTABLE_MODES else None
+
     async def async_added_to_hass(self) -> None:
-        """When entity is added to hass."""
-        # Call parent classes - this ensures the mixin's connectivity registration happens
         await super().async_added_to_hass()
-        # Update state immediately when added
-        await self._async_update_state()
+        self._update_state()
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        try:
-            # Schedule async state update
-            self.hass.async_create_task(self._async_update_state())
-        except Exception as e:
-            _LOGGER.debug("Error scheduling state update for %s: %s", self._attr_name, e)
-
-    async def _async_update_state(self) -> None:
-        """Update the select state asynchronously."""
-        try:
-            # Get the gecko client for this vessel's monitor
-            gecko_client = await self.coordinator.get_gecko_client()
-            
-            if gecko_client and gecko_client.operation_mode_controller:
-                # Use the clean API to get current mode name
-                self._attr_current_option = gecko_client.operation_mode_controller.mode_name
-                _LOGGER.debug("Updated watercare mode for %s: %s", self._attr_name, self._attr_current_option)
-            else:
-                _LOGGER.debug("Gecko client or operation mode controller not available for %s", self._attr_name)
-                self._attr_current_option = None
-                
-        except Exception as e:
-            _LOGGER.debug("Could not get operation mode for %s: %s", self._attr_name, e)
-            self._attr_current_option = None
-        
-        # Availability is now updated via CONNECTIVITY_UPDATE events, not polling
-        
-        # Write the updated state
+        # No detached task may outlive a removed entity or race with newer reports.
+        self._update_state()
         self.async_write_ha_state()
 
     async def async_select_option(self, option: str) -> None:
-        """Change the selected option."""
-        if option not in WATERCARE_MODE_OPTIONS:
-            _LOGGER.error("Invalid watercare mode option: %s", option)
-            return
-        
-        _LOGGER.debug("Setting watercare mode for %s to %s", self._attr_name, option)
-        
+        if option not in WATERCARE_SELECTABLE_MODES:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="unsupported_watercare_mode"
+            )
+        controller = self._controller()
+        if not self.available or controller is None:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="watercare_unavailable"
+            )
         try:
-            # Get the gecko client for this vessel
-            gecko_client = await self.coordinator.get_gecko_client()
-            
-            if not gecko_client:
-                _LOGGER.error("No gecko client available for vessel %s", self._vessel_name)
-                return
-                
-            if not gecko_client.operation_mode_controller:
-                _LOGGER.error("Operation mode controller not available for vessel %s", self._vessel_name)
-                return
-                
-            _LOGGER.debug("Setting operation mode to %s for vessel %s", option, self._vessel_name)
-            
-            # Use the clean API to set the mode by name
-            await self.hass.async_add_executor_job(gecko_client.operation_mode_controller.set_mode_by_name, option)
-            
-            # Let the coordinator update handle state changes
-            _LOGGER.debug("Sent watercare mode command for %s", self._attr_name)
-            
-            # Request coordinator refresh to get updated state from the device
-            await self.coordinator.async_request_refresh()
-                
-        except Exception as e:
-            raise HomeAssistantError(f"Could not set watercare mode: {e}") from e
+            await self.hass.async_add_executor_job(controller.set_mode_by_name, option)
+        except Exception as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="command_failed"
+            ) from err
+        # A successful publish is not a new reported mode. Push events update state.

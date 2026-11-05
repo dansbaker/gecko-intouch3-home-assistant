@@ -21,6 +21,9 @@ from . import GeckoConfigEntry
 from .gecko_iot_client.models.zone_types import ZoneType
 
 
+# Explicit platform concurrency: commands are serialized.
+PARALLEL_UPDATES = 1
+
 _LOGGER = logging.getLogger(__name__)
 
 

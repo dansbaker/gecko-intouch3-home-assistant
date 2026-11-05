@@ -37,6 +37,9 @@ from .gecko_iot_client.helpers.telemetry import (
 from .gecko_iot_client.models.zone_types import ZoneType, FlowZoneType
 from .gecko_iot_client.models.flow_zone import FlowZone, FlowZoneCapabilities
 
+# Explicit platform concurrency: commands are serialized.
+PARALLEL_UPDATES = 1
+
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(

@@ -47,6 +47,10 @@ The cloud payload handling is covered by automated tests based on public fork ex
 
 If data stops updating, check the spa in the Gecko app and inspect the gateway/vessel connection entities. A pump running for filtration or heating can remain on after a manual off request; the integration preserves automatic-demand protection. Two-speed pumps parked at high speed can start at low first and wait for a device report before requesting high.
 
+Downloaded diagnostics include anonymous vessel labels, connection health, pump counts and speed limits, lighting capabilities, and thermostat readings. They exclude account/device identifiers, names, credentials, URLs and raw cloud payloads. These snapshots help diagnose spa configurations that maintainers do not own, including additional pumps. Waterlab diagnostics currently report availability and reading counts.
+
+Watercare commands now report delivery failures explicitly and wait for the spa's reported mode before changing the displayed state. The unrecognized “Other” mode is no longer offered as a command.
+
 Report problems and contribute changes in [this repository](https://github.com/dansbaker/gecko-intouch3-home-assistant/issues). Include your Home Assistant version, device/controller details, reproduction steps and redacted diagnostics. Remove tokens, credentials and personal identifiers from reports. See [development](docs/DEVELOPMENT.md), the [upstream issue/PR review](docs/UPSTREAM_REVIEW.md), [fork review](docs/FORK_REVIEW.md), and [restoration changes](docs/RESTORATION.md).
 
 Known limits include unverified ARM64 native-runtime behavior on real Home Assistant hardware, device-specific RGB/effect semantics, and unresolved eco/Watercare setpoint behavior. Automated tests cannot establish physical spa behavior.

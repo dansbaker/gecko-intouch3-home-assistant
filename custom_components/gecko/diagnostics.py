@@ -1,167 +1,74 @@
-"""Diagnostics support for Gecko integration."""
+"""Shareable Gecko diagnostics with an allowlist of modeled data."""
 
 from __future__ import annotations
 
-import logging
 from typing import Any
-
-from .gecko_iot_client import GeckoIotClient
-from .gecko_iot_client.models.connectivity import ConnectivityStatus
 
 from homeassistant.core import HomeAssistant
 
-from .connection_manager import async_get_connection_manager
-from . import GeckoConfigEntry, GeckoRuntimeData
+from . import GeckoConfigEntry
+from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
+from .gecko_iot_client.models.zone_types import ZoneType
 
-_LOGGER = logging.getLogger(__name__)
 
-
-def _get_coordinator_diagnostics(coordinator) -> dict[str, Any]:
-    """Get coordinator diagnostics."""
-    if not coordinator:
-        return {}
-    
-    return {
-        "vessel_id": coordinator.vessel_id,
-        "monitor_id": coordinator.monitor_id,
-        "vessel_name": coordinator.vessel_name,
-        "has_initial_zones": coordinator._has_initial_zones,
-        "zones": {
-            zone_type.value: len(zones)
-            for zone_type, zones in coordinator.get_all_zones().items()
-        },
-        "spa_state_keys": list((coordinator.get_spa_state() or {}).keys()),
-        "consecutive_failures": coordinator._consecutive_failures,
-        "reconnect_attempts": coordinator._reconnect_attempts,
+def _connection_diagnostics(connection) -> dict[str, Any]:
+    """Expose connection health and a public client snapshot, never identifiers."""
+    result = {
+        "transport_connected": bool(connection.is_connected),
+        "fully_connected": bool(connection.is_fully_connected),
+        "update_subscribers": len(connection.update_callbacks),
     }
-
-
-def _get_gecko_client_info(gecko_client: GeckoIotClient) -> dict[str, Any]:
-    """Get gecko client diagnostics."""
-    try:
-        client_info = {
-            "client_id": gecko_client.id,
-            "is_connected": gecko_client.is_connected,
-            "has_configuration": gecko_client._configuration is not None,
-            "has_state": gecko_client._state is not None,
-        }
-        
-        # Add connectivity status details
-        if gecko_client.connectivity_status:
-            connectivity = gecko_client.connectivity_status
-            client_info["connectivity"] = {
-                "transport_connected": connectivity.transport_connected,
-                "gateway_status": connectivity.gateway_status,
-                "vessel_status": connectivity.vessel_status,
-                "is_fully_connected": connectivity.is_fully_connected,
-            }
-        
-        # Add operation mode information
-        if gecko_client.operation_mode_controller:
-            omc = gecko_client.operation_mode_controller
-            client_info["operation_mode"] = {
-                "mode": omc.operation_mode.value if omc.operation_mode else None,
-                "mode_name": omc.mode_name,
-                "is_energy_saving": omc.is_energy_saving,
-            }
-        
-        # Add zone information
-        if gecko_client._zones:
-            client_info["zones"] = {
-                zone_type.value: len(zones)
-                for zone_type, zones in gecko_client._zones.items()
-            }
-        
-        # Add transporter information
-        if gecko_client.transporter:
-            transporter = gecko_client.transporter
-            transporter_info = {
-                "type": type(transporter).__name__,
-            }
-            # Check for monitor_id using getattr to handle different transporter types
-            monitor_id = getattr(transporter, 'monitor_id', None)
-            if monitor_id:
-                transporter_info["monitor_id"] = monitor_id
-            # Check for MQTT-specific attributes
-            mqtt_client = getattr(transporter, '_mqtt_client', None)
-            if mqtt_client is not None:
-                transporter_info["mqtt_connected"] = mqtt_client.is_connected()
-            client_info["transporter"] = transporter_info
-        
-        return client_info
-    except Exception as e:
-        _LOGGER.exception("Error getting gecko client info")
-        return {"error": str(e)}
-
-
-def _get_connection_diagnostics(connection_manager, monitor_ids=None) -> dict[str, Any]:
-    """Get connection diagnostics."""
-    if not connection_manager:
-        return {}
-    
-    connections = {}
-    for monitor_id, connection in connection_manager._connections.items():
-        if monitor_ids is not None and monitor_id not in monitor_ids:
-            continue
-        conn_data = {
-            "monitor_id": monitor_id,
-            "vessel_name": connection.vessel_name,
-            "is_connected": connection.is_connected,
-            "websocket_url": connection.websocket_url[:50] + "..." if connection.websocket_url else None,
-            "callback_count": len(connection.update_callbacks),
-        }
-        
-        # Add connectivity status from connection (stored from connectivity updates)
-        if connection.connectivity_status:
-            connectivity: ConnectivityStatus = connection.connectivity_status
-            conn_data["connectivity_status"] = {
-                "transport_connected": connectivity.transport_connected,
-                "gateway_status": str(connectivity.gateway_status),
-                "vessel_status": str(connectivity.vessel_status),
-                "is_fully_connected": connectivity.is_fully_connected,
-            }
-        
-        # Redact sensitive websocket URL
-        if conn_data.get("websocket_url"):
-            conn_data["websocket_url"] = "<REDACTED>"
-        
-        # Get gecko client info if available
-        if connection.gecko_client:
-            conn_data["gecko_client"] = _get_gecko_client_info(connection.gecko_client)
-        
-        connections[monitor_id] = conn_data
-    
-    return connections
+    if connection.gecko_client is not None:
+        try:
+            result["client"] = connection.gecko_client.diagnostic_snapshot()
+        except Exception:  # noqa: BLE001 -- Fail closed without exposing provider errors.
+            # An exception may contain tokens/URLs; neither serialize nor log it.
+            result["client"] = {"status": "snapshot_unavailable"}
+    return result
 
 
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, config_entry: GeckoConfigEntry
 ) -> dict[str, Any]:
-    """Return diagnostics for a config entry."""
-    
-    # Coordinators are held in config-entry runtime data (one per vessel).
-    runtime_data: GeckoRuntimeData = config_entry.runtime_data
-    connection_manager = await async_get_connection_manager(hass)
-    
-    diagnostics_data = {
+    """Read only this entry's runtime; do not create a connection manager."""
+    runtime = getattr(config_entry, "runtime_data", None)
+    manager = hass.data.get(GECKO_CONNECTION_MANAGER_KEY)
+    coordinators = []
+    connections = {}
+    for index, coordinator in enumerate(runtime.coordinators if runtime else [], 1):
+        # Anonymous per-entry labels preserve relationships without exposing
+        # account, vessel or monitor IDs, names or dictionary keys.
+        label = f"vessel_{index}"
+        coordinators.append(
+            {
+                "vessel": label,
+                "has_initial_zones": coordinator._has_initial_zones,
+                "zone_counts": {
+                    kind.value: len(zones)
+                    for kind, zones in coordinator.get_all_zones().items()
+                    if isinstance(kind, ZoneType)
+                },
+                "consecutive_failures": coordinator._consecutive_failures,
+                "reconnect_attempts": coordinator._reconnect_attempts,
+                "waterlab": {
+                    "available": coordinator.waterlab_available,
+                    "polling_disabled": coordinator._waterlab_poll_disabled,
+                    "reading_count": len(coordinator.waterlab_readings),
+                },
+            }
+        )
+        if (
+            manager is not None
+            and (connection := manager.get_connection(coordinator.monitor_id))
+            is not None
+        ):
+            connections[label] = _connection_diagnostics(connection)
+    return {
         "config_entry": {
-            "entry_id": config_entry.entry_id,
-            "title": config_entry.title,
             "domain": config_entry.domain,
             "state": config_entry.state.value,
         },
-        "coordinators": [
-            _get_coordinator_diagnostics(coordinator)
-            for coordinator in (runtime_data.coordinators if runtime_data else [])
-        ],
-        "connections": _get_connection_diagnostics(connection_manager, {coordinator.monitor_id for coordinator in runtime_data.coordinators} if runtime_data else set()),
-        "runtime_data": {},
+        "coordinators": coordinators,
+        "connections": connections,
+        "runtime_loaded": runtime is not None,
     }
-    
-    # Get runtime data (API client info)
-    if runtime_data:
-        diagnostics_data["runtime_data"] = {
-            "api_client_type": type(runtime_data.api_client).__name__,
-        }
-    
-    return diagnostics_data

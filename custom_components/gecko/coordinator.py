@@ -108,6 +108,8 @@ class GeckoVesselCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_handle_zone_update(self, data: dict[str, Any]) -> None:
         """Handle zone update in the event loop."""
+        if self._shutdown_requested:
+            return
         # Trigger entity discovery when zones are updated
         self.async_set_updated_data(data)
         
@@ -380,10 +382,9 @@ class GeckoVesselCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     if not self._initial_zones_loaded_event.is_set():
                         self._initial_zones_loaded_event.set()
                 
-                # Schedule the async call to run on the event loop from background thread
-                asyncio.run_coroutine_threadsafe(
-                    self._async_handle_zone_update({"last_update": "zone_update"}),
-                    self.hass.loop
+                # The connection manager dispatches callbacks onto the HA loop.
+                self.hass.async_create_task(
+                    self._async_handle_zone_update({"last_update": "zone_update"})
                 )
 
             def on_state_update(state_data):

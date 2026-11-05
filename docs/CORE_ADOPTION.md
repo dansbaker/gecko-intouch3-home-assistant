@@ -252,3 +252,31 @@ suite: **433 tests and 46 subtests**. Full config-flow line/branch coverage rema
 enforced. New OAuth provider modules have full measured line coverage. The
 standalone wheel and a rebuild/install from the source archive pass the expanded
 client checks without HA installed. No package, PR, release or push was published.
+
+
+## Diagnostics and Watercare hardening (5 November 2026)
+
+Diagnostics use an allowlisted public client snapshot. Anonymous vessel labels
+retain connection health, modeled pump counts/speeds/ranges, lighting capabilities
+and thermostat readings without IDs, names, credentials, URLs or raw cloud
+payloads. Unknown status text and nonfinite numeric values are excluded; samples
+are bounded. Export does not create connections, inspect other entries, or expose
+provider exception messages. Waterlab exports availability and reading counts.
+
+The Watercare selector uses synchronous reported-state handling, excludes the
+unrecognized Other mode from commands, and raises translated action errors for
+unsupported options, unavailable control and command failures. Publishing a
+command does not confirm its mode; a subsequent reported mode updates HA.
+Connection-manager zone notifications now create HA-tracked tasks on the event
+loop, fixing delayed displayed state. Queued zone updates stop after shutdown.
+All control platforms explicitly serialize service updates; read-only sensor
+platforms permit parallel updates. Regression tests exercise actual HA service
+serialization while incoming reports continue to update state.
+
+Validation: **455 tests and 46 subtests pass**. Config flow, diagnostics and select
+each have **100% statement and branch coverage**. Overall measured statement
+coverage is **74.7%**, branch coverage **62.2%**; this remains below a complete
+integration-wide adoption target. A fresh standalone wheel passes the public
+snapshot and existing client checks without Home Assistant installed. Hardware
+confirmation remains limited to available devices; these tests do not establish
+live Waterlab or additional-pump operation. No push or package publication.

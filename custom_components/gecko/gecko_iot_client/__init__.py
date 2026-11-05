@@ -245,6 +245,73 @@ class GeckoIotClient:
         """
         return self._operation_mode_controller
 
+    def diagnostic_snapshot(self) -> Dict[str, Any]:
+        """Return a bounded, identity-free view of modeled device state.
+
+        Never include arbitrary configuration/state mappings, IDs, names,
+        addresses, credentials or effect names in a shareable snapshot.
+        """
+        import math
+        from enum import Enum
+
+        def number(value):
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                return None
+            try:
+                return value if math.isfinite(value) else None
+            except OverflowError:
+                return None
+
+        def status(value):
+            return value if value in ("CONNECTED", "DISCONNECTED", "RUNNING", "READY", "OFFLINE", "UNKNOWN") else "OTHER"
+
+        connectivity = self.connectivity_status
+        controller = self.operation_mode_controller
+        mode = controller.operation_mode if controller else None
+        snapshot = {
+            "client_version": __version__,
+            "has_configuration": self._configuration is not None,
+            "has_state": self._state is not None,
+            "connectivity": {
+                "transport_connected": bool(connectivity.transport_connected),
+                "gateway_status": status(connectivity.gateway_status),
+                "vessel_status": status(connectivity.vessel_status),
+                "is_fully_connected": bool(connectivity.is_fully_connected),
+            },
+            "operation_mode": mode.value if isinstance(mode, OperationMode) else None,
+            "zones": {},
+        }
+        for kind, zones in list(self.get_zones().items()):
+            if not isinstance(kind, ZoneType):
+                continue
+            records = []
+            for zone in list(zones)[:128]:
+                record = {}
+                if isinstance(zone, FlowZone):
+                    config = zone.speed_config or {}
+                    record = {
+                        "active": zone.active if isinstance(zone.active, bool) else None,
+                        "speed": number(zone.speed),
+                        "speed_config": {key: number(config.get(key)) for key in ("minimum", "maximum", "stepIncrement")},
+                    }
+                elif isinstance(zone, LightingZone):
+                    record = {
+                        "active": zone.active if isinstance(zone.active, bool) else None,
+                        "has_rgb": zone.rgbi is not None,
+                        "has_effect": zone.effect is not None,
+                    }
+                elif isinstance(zone, TemperatureControlZone):
+                    record = {
+                        "temperature": number(zone.temperature),
+                        "target_temperature": number(zone.target_temperature),
+                        "minimum": number(zone.min_temperature_set_point_c_value),
+                        "maximum": number(zone.max_temperature_set_point_c_value),
+                        "status": zone.status.value if isinstance(zone.status, Enum) and isinstance(zone.status.value, int) else None,
+                    }
+                records.append(record)
+            snapshot["zones"][kind.value] = {"count": len(zones), "samples": records, "truncated": len(zones) > 128}
+        return snapshot
+
     def on(self, channel: EventChannel, callback: Callable) -> None:
         """
         Register a callback for a specific event channel.
