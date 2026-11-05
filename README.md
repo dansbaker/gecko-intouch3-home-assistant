@@ -22,7 +22,7 @@ Available controls and sensors depend on your equipment and the data Gecko expos
 
 ## Installation
 
-In HACS, add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a custom repository with category **Integration**, download Gecko, and restart Home Assistant. Until a revived release is published, use a checkout of the restoration branch for manual testing.
+In HACS, add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a custom repository with category **Integration**, download version **3.0.0** or newer, and restart Home Assistant.
 
 For manual installation, copy the complete `custom_components/gecko` directory into your Home Assistant `custom_components` directory and restart. The bundled client directory must be included.
 
@@ -41,7 +41,7 @@ To move from Gecko's official HACS repository:
 3. Add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a HACS custom repository with category **Integration** and download a revived release from this repository. Do not leave both repositories managing the same `custom_components/gecko` directory.
 4. Restart Home Assistant after the replacement is installed, then check that your existing spa entities are available. There is no need to add Gecko again when migrating from the official integration.
 
-For manual upgrades, replace the complete `custom_components/gecko` directory before restarting; include the bundled client. Version **3.0.1** is prepared on the restoration branch. Until its matching GitHub release is published, HACS's old `v0.1.x` releases do not contain this revived integration; use the restoration checkout for manual testing.
+For manual upgrades, replace the complete `custom_components/gecko` directory before restarting; include the bundled client. The first revived release is **3.0.0**. Old `v0.1.x` releases contain the abandoned `gecko_spa` integration and are not an upgrade to Gecko's official integration.
 
 The original abandoned implementation used `gecko_spa`. Its configuration and entity identities are different: remove that old integration and configure Gecko again, then update automations referencing its entities. Do not run both implementations for the same spa. Keep a Home Assistant backup before migrating.
 

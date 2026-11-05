@@ -77,3 +77,18 @@ Their original Apache-2.0 licensing and attribution are preserved alongside the
 inherited GPL client license. No module aliases or duplicate source copies are
 used. The future core adapter still needs to consume an approved public client
 release and finish auditing the raw-data/model API boundary.
+
+
+## Publishing integration releases
+
+Bump `custom_components/gecko/manifest.json` to the next stable semantic version,
+add matching notes at `docs/releases/<version>.md`, and merge to `master`.
+The Release workflow detects an untagged version, runs the complete test suite,
+HACS/hassfest validation and standalone package checks, then creates `v<version>`
+at that exact checked commit, marks the GitHub release latest, and attaches
+`gecko.zip` containing the complete integration and bundled client. Existing tags
+are never moved or overwritten. A failed check prevents publication.
+
+`workflow_dispatch` can retry publication of the version currently on `master`;
+it does not bypass the checks. Branch pushes and pull requests do not publish.
+Integration releases do not publish the separately versioned client to PyPI.

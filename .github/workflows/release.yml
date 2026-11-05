@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - custom_components/gecko/manifest.json
+      - .github/workflows/release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gecko-release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.version.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect an unreleased integration version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python script/release.py prepare
+
+  tests:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/tests.yaml
+
+  validate:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/validate.yaml
+
+  client-package:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    uses: ./.github/workflows/client-package.yaml
+
+  publish:
+    needs: [version, tests, validate, client-package]
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and publish the matching GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python script/release.py publish
