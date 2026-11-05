@@ -32,7 +32,16 @@ If Gecko has issued OAuth credentials for your application, the integration also
 
 ### Existing installations
 
-This build uses the official integration's `gecko` domain. Replace the existing `custom_components/gecko` files as a complete directory, then restart. It retains official config-entry data and migrates older name-based entity identifiers where possible.
+This build uses the official integration's `gecko` domain and replaces the official integration in place. It retains official config-entry data and migrates older name-based entity identifiers where possible. A higher version number does **not** make HACS switch repositories automatically.
+
+To move from Gecko's official HACS repository:
+
+1. Take a Home Assistant backup.
+2. Uninstall the official Gecko download **in HACS**. Keep the configured Gecko integration under **Settings → Devices & services**; deleting it would remove its configuration and entities.
+3. Add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a HACS custom repository with category **Integration** and download a revived release from this repository. Do not leave both repositories managing the same `custom_components/gecko` directory.
+4. Restart Home Assistant after the replacement is installed, then check that your existing spa entities are available. There is no need to add Gecko again when migrating from the official integration.
+
+For manual upgrades, replace the complete `custom_components/gecko` directory before restarting; include the bundled client. Version **3.0.1** is prepared on the restoration branch. Until its matching GitHub release is published, HACS's old `v0.1.x` releases do not contain this revived integration; use the restoration checkout for manual testing.
 
 The original abandoned implementation used `gecko_spa`. Its configuration and entity identities are different: remove that old integration and configure Gecko again, then update automations referencing its entities. Do not run both implementations for the same spa. Keep a Home Assistant backup before migrating.
 
