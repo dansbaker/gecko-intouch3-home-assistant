@@ -67,6 +67,10 @@ Thank you to the authors whose pull requests and fork work were incorporated or 
 
 These changes were reviewed, combined and in several cases repaired rather than merged verbatim. The review documents record the scope and deferred work. Thanks also to everyone who supplied issues, logs, testing and public forks, and to earlier contributors whose work is already in the official baseline.
 
+## Direction
+
+Our long-term goal is inclusion in Home Assistant Core, with Gold as the quality target. The current custom integration is not yet core-ready or awarded a quality tier. See the [core adoption requirements and roadmap](docs/CORE_ADOPTION.md), including the plan to retain one repository while publishing the protocol client as a standalone dependency.
+
 ## Source and licensing
 
 Gecko Alliance's original integration license and notices are retained in [LICENSE](LICENSE) and [NOTICE](NOTICE). The bundled IoT client retains its [GPL-3.0-or-later license](custom_components/gecko/gecko_iot_client/LICENSE). The distribution includes both sets of source and notices; the root Apache license does not replace the client's GPL license. Gecko trademarks belong to Gecko Alliance.

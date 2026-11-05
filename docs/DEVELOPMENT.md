@@ -2,6 +2,10 @@
 
 The Home Assistant integration and its IoT client are maintained, tested and distributed together. HACS installs the complete `custom_components/gecko` directory. There is no separate client wheel, PyPI dependency, submodule, or client release process.
 
+## Core adoption direction
+
+The bundled layout below describes today's custom installation. The goal is Home Assistant Core inclusion. Its requirements call for a separately published protocol library; we can keep that package and the integration in this repository. See [CORE_ADOPTION.md](CORE_ADOPTION.md) for the researched acceptance criteria, licensing/OAuth questions and staged transition. Packaging has not changed yet.
+
 ## Source layout
 
 - `custom_components/gecko/*.py`: Home Assistant setup, coordinators and entities.
