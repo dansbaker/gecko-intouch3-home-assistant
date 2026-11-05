@@ -146,3 +146,12 @@ This review does not change the integration domain, OAuth client identity, repos
 ## Restoration implementation follow-up
 
 The decisions above record the initial review, before repairs. The subsequent local restoration incorporates the accepted parts and repaired adaptations of PRs 32/37/57 rather than leaving their useful changes on hold. [RESTORATION.md](RESTORATION.md) records the final implementation; [FORK_REVIEW.md](FORK_REVIEW.md) records all 16 public forks. In particular, passive `COOLING` status is now idle in HA following Logix's later fork correction; active heat-pump cooling remains cooling. Hardware-specific limitations and unresolved eco-setpoint reports remain open.
+
+
+### Further repairs, 5 November 2026
+
+The follow-up in [RESTORATION.md](RESTORATION.md) repairs desired-state echoes
+being treated as reported zone state, a reproducible contributor candidate for
+issue 23. It also prevents failed temperature/pump publishes from changing the
+local model. Neither change establishes a physical-hardware resolution of
+issue 23 or the distinct eco/Watercare behavior in 45/61.

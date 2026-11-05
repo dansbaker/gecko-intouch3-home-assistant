@@ -311,10 +311,10 @@ class FlowZone(AbstractZone):
             ValueError: If speed is outside valid range
         """
         self._validate_speed(speed)
+        requested_active = self.active if active is None else active
+        self._publish_desired_state({"speed": speed, "active": requested_active})
         self.speed = speed
-        if active is not None:
-            self.active = active
-        self._publish_desired_state({"speed": speed, "active": self.active})
+        self.active = requested_active
 
     def activate(self) -> None:
         """Activate this flow zone."""

@@ -198,8 +198,8 @@ class TemperatureControlZone(AbstractZone):
                 f"({self.min_temperature_set_point_c}°C to {self.max_temperature_set_point_c}°C)"
             )
 
-        self.set_point = temperature
         self._publish_desired_state({"setPoint": temperature})
+        self.set_point = temperature
 
     def get_temperature_state(self) -> Dict[str, Any]:
         """

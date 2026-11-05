@@ -29,3 +29,29 @@ Final local verification: **374 tests passed and 46 subtests passed** on Python 
 The unified tests exercise the actual bundled parser/models, MQTT configuration and mocked HA entities/API boundaries. Client transport/model tests run alongside reconnect, stale-zone, telemetry, light, pump, auth/rate-limit and Waterlab regressions. A package test verifies the integration can import with no separately installed `gecko-iot-client` distribution.
 
 This is source/test verification, not physical spa or live cloud verification. Outstanding work includes actual ARM64 native-runtime validation, device-specific RGB/effect formats, optional cloud endpoint permissions, Waterlab sample freshness and issue 45/61 eco setpoint behavior. No spa commands, Home Assistant configuration changes, GitHub comments/merges, push or release were performed.
+
+
+## Follow-up: state confirmation and failed commands (5 November 2026)
+
+Further review reproduced two classes of remaining defects in the restored
+code. A desired-only shadow message could overwrite reported zone state: a
+light reported off became on without any new device report, a pump could gain
+an unconfirmed running report, and a temperature target could change. The zone
+parser now consumes reported state only. This addresses a reproducible state
+handling defect relevant to upstream issue 23; it does not establish that every
+instance of the reported stuck-light symptom has the same cause.
+
+Temperature and pump speed setters also changed their local model before
+publishing. Failed or timed-out delivery therefore left an apparently changed
+target/speed behind. They now publish first and update local state only after
+the callback succeeds, matching the restored light behavior. Delivery errors
+still propagate to Home Assistant. Successful publication is not proof that
+the physical controller accepted or applied the request.
+
+Ten regression cases cover desired-only messages with absent/empty/unrelated
+reported state, reported off/on transitions, failed/timed-out temperature and
+pump commands, and successful command ordering including preserved pump active
+state. Before the fixes, nine failed and one passed. Afterward, the targeted
+parser/model/entity suite passed 91 tests; the full suite passed **384 tests
+and 46 subtests**. `git diff --check` passed. These repairs do not solve the
+undocumented Savings-mode setpoint semantics in upstream issues 45/61.

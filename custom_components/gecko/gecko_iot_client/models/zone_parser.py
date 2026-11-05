@@ -135,16 +135,10 @@ class ZoneConfigurationParser:
         # Extract the state from the shadow structure
         state = state_data.get("state", {})
         reported_state = state.get("reported", {})
-        desired_state = state.get("desired", {})
-
-        # Look for zone runtime state data in the reported state first, then desired state
+        # Desired state is a pending request, not device confirmation. In
+        # particular, our own update/accepted echo must not turn a light back
+        # on or confirm pump startup while the device still reports it off.
         zones_state = reported_state.get("zones", {}) if reported_state else {}
-
-        if not zones_state and desired_state:
-            logger.debug(
-                "No zones runtime state found in reported state, checking desired state"
-            )
-            zones_state = desired_state.get("zones", {})
 
         if not zones_state:
             logger.debug("No zones runtime state found")
