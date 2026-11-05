@@ -7,6 +7,10 @@
       "reauth_confirm": {
         "title": "Re-authenticate with Gecko",
         "description": "Your Gecko authentication has expired. Please re-authenticate to restore connectivity."
+      },
+      "account": {
+        "title": "Connect to your Gecko account",
+        "description": "Account access could not be verified. Select Submit to retry. If authentication failed, sign in to Gecko again."
       }
     },
     "abort": {
@@ -26,6 +30,10 @@
     },
     "create_entry": {
       "default": "[%key:common::config_flow::create_entry::authenticated%]"
+    },
+    "error": {
+      "cannot_connect": "Unable to read your Gecko account. Check connectivity and try again.",
+      "invalid_auth": "Authentication is invalid or incomplete. Sign in again to continue."
     }
   },
   "entity": {

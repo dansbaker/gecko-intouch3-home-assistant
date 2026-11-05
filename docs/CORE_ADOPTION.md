@@ -74,10 +74,10 @@ reasons rather than marking unsupported claims as complete.
 | Rule or group | Current evidence and remaining work |
 | --- | --- |
 | `config-flow`, `test-before-configure` | OAuth and account/vessel API checks exist. Connection failures abort broadly; error recovery needs full flow-manager tests and clearer handling. |
-| `config-flow-test-coverage` | Only two direct reauth cases; add real UI-flow success, cancellation, invalid auth, network failures, recovery, empty accounts and optional configuration failures. |
-| `unique-config-entry` | Missing: no `async_set_unique_id` plus duplicate abort, or account-data duplicate check. Use stable account identity and test both new and existing entries. |
+| `config-flow-test-coverage` | Updated 5 November: real flow-manager tests reach 100% line/branch coverage of the flow module; CI now enforces it. Continue testing added paths and real OAuth deployment behavior. |
+| `unique-config-entry` | Updated 5 November: stable account unique ID and duplicate abort, with legacy account-data matching. Flow-manager tests cover current and older entries. |
 | `test-before-setup` | Connection setup exists, but failure classification and partial-setup cleanup need HA lifecycle tests. |
-| `entity-event-setup` | `GeckoEntityAvailabilityMixin.available` may register/rebind callbacks through `_ensure_callback_registered`. Move subscription changes into explicit lifecycle/reconnection handling; test removal and disabled entities. |
+| `entity-event-setup` | Updated 5 November: availability reads have no subscription side effects; lifecycle hooks own initial subscription and coordinator replacement updates. HA entity tests cover rebinding/removal and stale worker callbacks. |
 | `entity-unique-id`, `has-entity-name` | Most entity IDs and names exist. Several IDs embed entry IDs; audit stability, cross-account collisions and migration before changing them. |
 | `runtime-data`, `common-modules` | Typed runtime-data container, coordinator and base-entity modules exist. Audit global connection-manager ownership and cleanup. |
 | `appropriate-polling` | Independent five-minute Waterlab polling and push updates exist. Verify API limits, retries, task cancellation and that unnecessary polling is avoided. |
@@ -158,3 +158,23 @@ Sources: [development checklist](https://contributors.home-assistant.io/core/dev
 
 This roadmap changes no runtime behavior, claims no quality tier, publishes no
 package, and opens no Home Assistant issue or pull request.
+
+
+## First implementation milestone (5 November 2026)
+
+Account setup now has retryable validation with retained OAuth data for temporary
+failures. Invalid/incomplete authentication restarts login. Account IDs are
+validated before they can become entry identity, including rejecting `None`,
+blank values and booleans. Existing account/vessel data remains intact on reauth.
+
+Partial setup now shuts down already-connected vessels, and missing broker or
+monitor information cannot silently produce a successful setup. Successful
+unload removes platforms before closing clients; a failed platform unload
+preserves the runtime. Coordinator shutdown cancels base coordinator timers.
+
+Real HA setup/unload/setup and identifier migration tests supplement the prior
+model tests. The measured first milestone is **423 tests and 46 subtests passing**,
+with **100% config-flow line and branch coverage**. CI collects overall branch
+coverage and enforces the full-flow gate. Formatting/lint checks pass for the
+new flow, entity lifecycle, test and coverage-gate modules. This is not a full
+core lint/hassfest run, nor a claim that Bronze has been awarded.

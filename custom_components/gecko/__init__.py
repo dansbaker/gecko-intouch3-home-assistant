@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 
+from aiohttp import ClientError
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
@@ -15,7 +17,7 @@ from .api import OAuthGeckoApi
 from .oauth_implementation import GeckoPKCEOAuth2Implementation
 from .const import DOMAIN, OAUTH2_AUTHORIZE, OAUTH2_CLIENT_ID, OAUTH2_TOKEN
 from .coordinator import GeckoVesselCoordinator
-from .connection_manager import async_get_connection_manager
+from .connection_manager import async_get_connection_manager, GECKO_CONNECTION_MANAGER_KEY
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -151,23 +153,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         coordinators=coordinators,
     )
 
-    # Create devices for each vessel/spa and set up geckoIotClient
-    # Use specific exceptions to trigger Home Assistant's retry mechanism only for
-    # connection-related issues, not programming errors
     try:
         await _setup_vessels_and_gecko_clients(hass, entry)
+        await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
     except ConfigEntryAuthFailed:
-        # Re-raise auth failures directly so HA triggers the reauth flow
+        await _async_cleanup_runtime(hass, entry)
         raise
-    except OSError as ex:
-        # OSError covers ConnectionError, TimeoutError, and other I/O issues
-        raise ConfigEntryNotReady(f"Failed to connect to Gecko device: {ex}") from ex
+    except (OSError, ClientError) as err:
+        await _async_cleanup_runtime(hass, entry)
+        raise ConfigEntryNotReady("Unable to connect to Gecko") from err
+    except BaseException:
+        # Include cancellation: a partially initialized account can already
+        # own MQTT workers even though setup never reached platform loading.
+        await _async_cleanup_runtime(hass, entry)
+        raise
 
-    # Set up platforms immediately - entities will be created when zone data becomes available
-    await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
     for coordinator in coordinators:
         coordinator.async_start_waterlab_polling(entry)
-    
+
     _LOGGER.info("Gecko integration setup completed for %d vessels", vessels_count)
 
     return True
@@ -234,8 +237,7 @@ async def _setup_vessel_gecko_client(vessel: dict, api_client: OAuthGeckoApi, co
     monitor_id = vessel.get("monitorId")
     
     if not monitor_id:
-        _LOGGER.error("No monitor ID found for vessel %s. Available keys: %s", vessel_name, list(vessel.keys()))
-        return
+        raise ConnectionError(f"No monitor ID found for vessel {vessel_name}")
     
     try:
         livestream_data = await api_client.async_get_monitor_livestream(monitor_id)
@@ -246,8 +248,7 @@ async def _setup_vessel_gecko_client(vessel: dict, api_client: OAuthGeckoApi, co
         websocket_url = livestream_data.get("brokerUrl")
         
         if not websocket_url:
-            _LOGGER.error("No WebSocket URL found in livestream response for monitor %s", monitor_id)
-            return
+            raise ConnectionError("Gecko returned no broker URL")
         
         # Don't create zones from spa configuration in coordinator - let GeckoIotClient handle this
         # The coordinator will get zones from the GeckoIotClient once it's connected and configured
@@ -272,26 +273,25 @@ async def _setup_vessel_gecko_client(vessel: dict, api_client: OAuthGeckoApi, co
         raise
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry."""
-    # Clean up all vessel coordinators
-    runtime_data: GeckoRuntimeData = entry.runtime_data
-    for coordinator in runtime_data.coordinators:
+async def _async_cleanup_runtime(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Release every vessel created by this entry, including partial setup."""
+    runtime = getattr(entry, "runtime_data", None)
+    if runtime is None:
+        return
+    manager = hass.data.get(GECKO_CONNECTION_MANAGER_KEY)
+    for coordinator in runtime.coordinators:
         await coordinator.async_shutdown()
-    
-    # Disconnect all monitors from the connection manager
-    # This ensures fresh connections on reload with updated config/tokens
-    try:
-        connection_manager = await async_get_connection_manager(hass)
-        vessels = entry.data.get("vessels", [])
-        for vessel in vessels:
-            monitor_id = vessel.get("monitorId")
-            if monitor_id:
-                await connection_manager.async_disconnect_monitor(monitor_id)
-    except Exception as ex:
-        _LOGGER.error("Error disconnecting monitors during unload: %s", ex)
-    
-    return await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)
+        if manager is not None:
+            await manager.async_disconnect_monitor(coordinator.monitor_id)
+    entry.runtime_data = None
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Stop connections only after HA has removed all entity platforms."""
+    if not await hass.config_entries.async_unload_platforms(entry, _PLATFORMS):
+        return False
+    await _async_cleanup_runtime(hass, entry)
+    return True
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:

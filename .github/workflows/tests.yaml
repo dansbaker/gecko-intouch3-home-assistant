@@ -20,4 +20,6 @@ jobs:
       - name: Verify the standalone client is absent
         run: python -c "import importlib.util; assert importlib.util.find_spec('gecko_iot_client') is None"
       - name: Run integration and bundled client tests
-        run: python -m pytest
+        run: python -m pytest --cov=custom_components.gecko --cov-branch --cov-report=term --cov-report=json:coverage.json
+      - name: Enforce full config-flow coverage
+        run: python script/check_config_flow_coverage.py coverage.json

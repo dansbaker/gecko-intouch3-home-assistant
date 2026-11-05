@@ -42,3 +42,18 @@ The client license is preserved at `custom_components/gecko/gecko_iot_client/LIC
 At consolidation, runtime changes are limited to package relocation, relative integration imports and replacing installed-distribution version lookup with the source identifier `1.0.3+bundled`. The subsequent restoration changes update client models, transport and entities together; see [RESTORATION.md](RESTORATION.md) for the changes and verification.
 
 The imported reconnection tests isolate the transport clock from the test clock and explicitly stop/join their worker threads. This corrects upstream test timing races exposed by the Home Assistant test harness; it does not change runtime reconnect behavior.
+
+
+## Coverage gates
+
+The unified CI job now measures statement and branch coverage and requires full
+coverage of `config_flow.py`. To reproduce:
+
+```sh
+.venv/bin/python -m pytest --cov=custom_components.gecko --cov-branch --cov-report=term --cov-report=json:coverage.json
+.venv/bin/python script/check_config_flow_coverage.py coverage.json
+```
+
+The gate fails when the flow is absent, branches were not measured, or any line
+or branch is uncovered. This is the initial Bronze-focused gate; it does not
+claim that other integration modules meet Silver's per-module threshold.

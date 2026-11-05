@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import logging
 
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
+
+from .coordinator import GeckoVesselCoordinator
+from .gecko_iot_client import GeckoIotClient
 from .gecko_iot_client.models.events import EventChannel
 from .gecko_iot_client.models.zone_types import AbstractZone, ZoneType
-from .gecko_iot_client import GeckoIotClient
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
-from .coordinator import GeckoVesselCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,99 +24,68 @@ class GeckoEntityAvailabilityMixin:
     _connectivity_callback_registered: bool = False
     _registered_gecko_client: GeckoIotClient | None = None
 
+    _registered_connectivity_callback = None
+
     @property
     def available(self) -> bool:
-        """Return if entity is available.
-        
-        Override the cached property to make availability truly dynamic.
-        Also re-registers connectivity callback if the gecko_client has been
-        replaced (e.g., after reconnection).
-        """
-        self._ensure_callback_registered()
-        self._update_availability()
-        return self._attr_available
+        """Read availability without changing subscriptions or other state."""
+        return self._check_is_connected()
 
-    def _ensure_callback_registered(self) -> None:
-        """Ensure the connectivity callback is registered on the current gecko_client.
-
-        After reconnection, the connection manager replaces the gecko_client instance.
-        This method detects that and re-registers the callback on the new client.
-        """
+    @callback
+    def _rebind_connectivity(self) -> None:
+        """Follow client replacement only while this entity is registered."""
         current_client = self._get_gecko_client_sync()
-        if not current_client or current_client is self._registered_gecko_client:
+        if current_client is self._registered_gecko_client:
+            return
+        self._unsubscribe_connectivity()
+        if current_client is None:
             return
 
-        # Client was replaced (reconnection happened) — re-register
-        if self._registered_gecko_client:
-            try:
-                self._registered_gecko_client.off(
-                    EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update
-                )
-            except Exception:
-                pass  # Old client may be disposed
+        def dispatch(status):
+            self.hass.loop.call_soon_threadsafe(
+                self._handle_connectivity_update, current_client, status
+            )
 
-        current_client.on(EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update)
+        current_client.on(EventChannel.CONNECTIVITY_UPDATE, dispatch)
         self._registered_gecko_client = current_client
+        self._registered_connectivity_callback = dispatch
         self._connectivity_callback_registered = True
-        _LOGGER.debug("Re-registered connectivity callback on new gecko_client")
+
+    @callback
+    def _unsubscribe_connectivity(self) -> None:
+        """Remove exactly the callback installed on the previously bound client."""
+        if self._registered_gecko_client is not None:
+            self._registered_gecko_client.off(
+                EventChannel.CONNECTIVITY_UPDATE, self._registered_connectivity_callback
+            )
+        self._registered_gecko_client = None
+        self._registered_connectivity_callback = None
+        self._connectivity_callback_registered = False
 
     async def async_added_to_hass(self) -> None:
-        """Register for connectivity updates when entity is added to hass."""
+        """Subscribe when HA adds an enabled entity; remove every subscription."""
         await super().async_added_to_hass()  # type: ignore[misc]
-        await self._manage_connectivity_callback(register=True)
+        self._rebind_connectivity()
+        self.async_on_remove(self._unsubscribe_connectivity)
+        self.async_on_remove(
+            self.coordinator.async_add_listener(self._rebind_connectivity)
+        )
         self._update_availability()
 
-    async def async_will_remove_from_hass(self) -> None:
-        """Unregister from connectivity updates when entity is removed."""
-        await self._manage_connectivity_callback(register=False)
-        await super().async_will_remove_from_hass()  # type: ignore[misc]
-
-    async def _manage_connectivity_callback(self, register: bool) -> None:
-        """Register or unregister connectivity event callback."""
-        if register == self._connectivity_callback_registered:
+    @callback
+    def _handle_connectivity_update(self, client, status) -> None:
+        """Ignore callbacks queued before removal or client replacement."""
+        if (
+            client is not self._registered_gecko_client
+            or client is not self._get_gecko_client_sync()
+        ):
             return
-
-        # Register even while the transport is down. The connection manager keeps
-        # the client instance, and this callback is what lets the entity recover
-        # automatically when connectivity returns.
-        gecko_client = self._get_gecko_client_sync() if register else self._registered_gecko_client
-        if not gecko_client:
-            return
-
-        if register:
-            gecko_client.on(EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update)
-            self._registered_gecko_client = gecko_client
-        else:
-            gecko_client.off(EventChannel.CONNECTIVITY_UPDATE, self._on_connectivity_update)
-            self._registered_gecko_client = None
-
-        self._connectivity_callback_registered = register
-
-    def _on_connectivity_update(self, connectivity_status) -> None:
-        """Handle connectivity update events from gecko_iot_client.
-        
-        This callback is invoked from gecko_iot_client's background thread,
-        so we must schedule the state update on the event loop.
-        """
-        new_availability = self._check_is_connected()
-        if new_availability != self._attr_available:
-            _LOGGER.debug(
-                "Availability changed: %s -> %s (gateway=%s, vessel=%s)",
-                self._attr_available,
-                new_availability,
-                connectivity_status.gateway_status,
-                connectivity_status.vessel_status,
-            )
-            self._attr_available = new_availability
-            # Use the proper thread-safe method to write state from background thread
-            self.hass.loop.call_soon_threadsafe(
-                self.async_write_ha_state
-            )
+        self._update_availability()
+        self.async_write_ha_state()
 
     def _update_availability(self) -> None:
-        """Update availability from the retained connection snapshot."""
-        new_availability = self._check_is_connected()
-        self._attr_available = new_availability
+        """Keep cached availability for entity initialization compatibility."""
+        self._attr_available = self._check_is_connected()
 
     def _check_is_connected(self) -> bool:
         """Check if the transport, gateway, and vessel are connected."""

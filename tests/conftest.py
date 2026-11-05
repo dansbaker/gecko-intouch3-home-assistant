@@ -85,6 +85,7 @@ class FakeGeckoClient:
         self.monitor_id = monitor_id
         self.transporter = transporter
         self.connected = False
+        self.operation_mode_controller = None
         self.connect_calls = 0
         self.disconnect_calls = 0
         # Zones this client emits during connect(), like a real client does
@@ -136,6 +137,7 @@ class FakeGeckoClient:
         self.connected = transport_connected
         status = SimpleNamespace(
             transport_connected=transport_connected,
+            is_fully_connected=transport_connected,
             gateway_status="CONNECTED",
             vessel_status="RUNNING",
         )

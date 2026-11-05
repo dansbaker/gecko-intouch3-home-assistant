@@ -12,3 +12,6 @@ custom_components/gecko/.env
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Generated coverage reports
+coverage.json
