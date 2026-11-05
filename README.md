@@ -49,6 +49,8 @@ If data stops updating, check the spa in the Gecko app and inspect the gateway/v
 
 Downloaded diagnostics include anonymous vessel labels, connection health, pump counts and speed limits, lighting capabilities, and thermostat readings. They exclude account/device identifiers, names, credentials, URLs and raw cloud payloads. These snapshots help diagnose spa configurations that maintainers do not own, including additional pumps. Waterlab diagnostics currently report availability and reading counts.
 
+Pump, light and thermostat commands report unavailable controls and delivery failures clearly. Temperature targets must fall within the spa's configured limits. A pump running for heating or filtration cannot be stopped manually. Lights expose color control when reported by the device; plain on/off lights reject color and brightness requests.
+
 Watercare commands now report delivery failures explicitly and wait for the spa's reported mode before changing the displayed state. The unrecognized “Other” mode is no longer offered as a command.
 
 Report problems and contribute changes in [this repository](https://github.com/dansbaker/gecko-intouch3-home-assistant/issues). Include your Home Assistant version, device/controller details, reproduction steps and redacted diagnostics. Remove tokens, credentials and personal identifiers from reports. See [development](docs/DEVELOPMENT.md), the [upstream issue/PR review](docs/UPSTREAM_REVIEW.md), [fork review](docs/FORK_REVIEW.md), and [restoration changes](docs/RESTORATION.md).

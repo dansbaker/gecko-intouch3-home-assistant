@@ -34,7 +34,7 @@ Sources: [config-flow coverage](https://contributors.home-assistant.io/core/qual
 [dependency transparency](https://contributors.home-assistant.io/core/quality-scale/dependency-transparency/),
 [submission process](https://contributors.home-assistant.io/core/development/submitting/).
 
-The measured current baseline is 384 passing tests plus 46 passing subtests:
+The initial measured baseline was 384 passing tests plus 46 passing subtests:
 59.2% statement coverage and 46.5% branch coverage over the integration and bundled
 client together. These are our measurements, not a quality-scale award. The
 published Silver rule must be evaluated module by module on the integration's
@@ -107,10 +107,10 @@ Source: [OAuth and application credentials](https://contributors.home-assistant.
 
 For Silver, prioritize real config-entry setup/unload/reload tests, unavailable
 and recovery states, rate limiting, translated/specific errors, reauthentication,
-per-platform `PARALLEL_UPDATES`, and a defined maintainer commitment. The current
-select/diagnostics modules have no measured coverage, and setup is lightly
-covered. Existing tests mostly exercise models and entities directly; add tests
-through HA setup, entity states and service calls.
+per-platform `PARALLEL_UPDATES`, and a defined maintainer commitment. The initial audit found
+select/diagnostics without measured coverage and setup lightly covered. The
+milestones below add real HA lifecycle/service tests and full measured coverage
+for select/diagnostics; remaining platforms and coordinator paths still need work.
 
 For Gold, audit device information, late-added spas, removal of stale devices,
 redacted diagnostics, entity categories/classes, default-disabled diagnostics,
@@ -280,3 +280,44 @@ integration-wide adoption target. A fresh standalone wheel passes the public
 snapshot and existing client checks without Home Assistant installed. Hardware
 confirmation remains limited to available devices; these tests do not establish
 live Waterlab or additional-pump operation. No push or package publication.
+
+
+## Pump, light and climate actions (5 November 2026)
+
+All zone controls now reject disconnected or missing zones explicitly and wrap
+provider delivery failures in translated HA action errors. Raw provider error
+text is not used as the user-facing message. Multi-command light actions reject
+bound methods from a replaced zone, and reject RGB/brightness requests for lights
+that report only on/off capability before publishing any part of the request.
+Thermostat targets are checked against configured limits; invalid/nonfinite input
+is a translated validation error. Climate Watercare follows the same failure
+semantics as the selector and advertises preset control only when its controller
+exists. Pump automatic demands retain their manual-stop protection with a clear
+translated explanation. Low-first pump startup releases its confirmation listener
+on success, error, timeout or cancellation and stops on zone replacement.
+
+Real HA service tests cover successful delivery off the event loop and failed
+publishes across all three control platforms, plus missing/disconnected controls.
+Reload tests preserve existing entity IDs, unique IDs and device associations
+while commands use fresh zone objects. Existing reconnect and protocol tests
+continue to pass. Control units remain Celsius at the integration boundary, fan
+percentages map through reported speed configuration, and RGB capability follows
+reports. Entity-name translation (including the thermostat name), sensor metadata,
+and registry migration across account/config-entry recreation remain separate
+review items; this change deliberately preserves current registry identifiers.
+
+Validation: **537 tests and 46 subtests pass**, including 82 new action/reload
+cases. Ruff passes for the four changed production modules and new action tests;
+the config-flow coverage gate still passes. Overall statement/branch coverage is
+**75.6% / 64.1%**.
+
+| Module | Statement coverage | Branch coverage |
+| --- | --- | --- |
+| `fan.py` | 86.5% | 68.2% |
+| `light.py` | 92.2% | 76.5% |
+| `climate.py` | 97.3% | 88.5% |
+| `entity.py` | 96.8% | 83.3% |
+
+Config flow, select and diagnostics retain 100% statement and branch coverage.
+These results do not satisfy the complete integration-wide Silver coverage goal.
+No live spa action, push or publication was performed.

@@ -7,6 +7,7 @@ import logging
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 
+from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
 from .gecko_iot_client import GeckoIotClient
 from .gecko_iot_client.models.events import EventChannel
@@ -106,7 +107,7 @@ class GeckoEntityAvailabilityMixin:
         if not connection_manager:
             return None
 
-        connection = connection_manager._connections.get(self.coordinator.monitor_id)
+        connection = connection_manager.get_connection(self.coordinator.monitor_id)
         return connection.gecko_client if connection else None
 
 
@@ -129,12 +130,29 @@ class GeckoZoneEntityMixin:
     def available(self):
         return super().available and self._current_zone() is not None
 
+    def _require_zone(self) -> AbstractZone:
+        """Refuse commands when the connection or current zone is unavailable."""
+        zone = self._current_zone()
+        if zone is None or not self.available:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="device_unavailable"
+            )
+        return zone
+
     async def _async_zone_command(self, method, *args):
-        """Keep MQTT waits off the loop and surface delivery errors to HA."""
+        """Keep MQTT waits off the loop and expose translated delivery failures."""
+        zone = self._require_zone()
+        owner = getattr(method, "__self__", None)
+        if isinstance(owner, AbstractZone) and owner is not zone:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="device_reconnected"
+            )
         try:
             return await self.hass.async_add_executor_job(method, *args)
-        except (OSError, RuntimeError, ValueError) as err:
-            raise HomeAssistantError(str(err)) from err
+        except Exception as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="command_failed"
+            ) from err
 
     def _current_zone(self) -> AbstractZone | None:
         """Return this entity's zone on the current client, and rebind to it.

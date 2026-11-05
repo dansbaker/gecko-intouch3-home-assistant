@@ -109,6 +109,27 @@
     },
     "unsupported_hvac_mode": {
       "message": "This thermostat supports heating mode only."
+    },
+    "device_unavailable": {
+      "message": "The spa or this control is unavailable. Check the connection and try again."
+    },
+    "device_reconnected": {
+      "message": "The spa reconnected while this command was in progress. Try again."
+    },
+    "pump_start_unconfirmed": {
+      "message": "The pump has not confirmed running. It may still start at low speed; check its state before retrying."
+    },
+    "pump_automatic_demand": {
+      "message": "The pump is running for an automatic demand, such as filtration or heating, and cannot be stopped manually."
+    },
+    "unsupported_pump_speed": {
+      "message": "The selected pump speed is not supported."
+    },
+    "light_color_unsupported": {
+      "message": "This light does not report support for color or brightness control."
+    },
+    "invalid_temperature": {
+      "message": "The temperature must be a finite number within the limits reported by the spa."
     }
   }
 }

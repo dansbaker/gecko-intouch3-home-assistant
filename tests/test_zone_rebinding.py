@@ -15,6 +15,9 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
+from homeassistant.exceptions import HomeAssistantError
+
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
@@ -109,7 +112,9 @@ async def test_pump_missing_from_the_new_client_is_not_commanded(hass, network):
     await _drop_and_reconnect(hass, network, coordinator, new_zones)
 
     _coordinator_update(fan)
-    await fan.async_turn_off()
+    with pytest.raises(HomeAssistantError) as caught:
+        await fan.async_turn_off()
+    assert caught.value.translation_key == "device_unavailable"
 
     assert fan.is_on is True, "a missing zone must keep the last known state"
     assert published == [], "turn_off fell back to the replaced client's zone"

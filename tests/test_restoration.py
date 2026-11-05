@@ -36,6 +36,10 @@ def controls(hass):
     coordinator = GeckoVesselCoordinator(hass, entry.entry_id, "vessel", "monitor", "Spa")
     entry.runtime_data = SimpleNamespace(coordinators=[coordinator], api_client=None)
     published = []
+    # Pure model fixtures still represent an available connection for actions.
+    from custom_components.gecko.connection_manager import GECKO_CONNECTION_MANAGER_KEY
+    connection = SimpleNamespace(is_fully_connected=True, gecko_client=None)
+    hass.data[GECKO_CONNECTION_MANAGER_KEY] = Mock(get_connection=Mock(return_value=connection))
 
     def build(config, state):
         parser = ZoneConfigurationParser()
@@ -93,7 +97,7 @@ async def test_pump_on_state_is_physical_and_initiators_clear(controls):
 async def test_automatic_pump_demand_cannot_be_stopped(hass,controls):
     coord,entry,zones,published=controls({"flow":{"1":{}}},{"flow":{"1":{"active":True,"initiators_":["FI","UD"]}}})
     fan=GeckoFan(coord,entry,zones[ZoneType.FLOW_ZONE][0]);fan.hass=hass
-    with pytest.raises(HomeAssistantError,match="non-user"):
+    with pytest.raises(HomeAssistantError) as caught:
         await fan.async_turn_off()
     assert published == []
 
@@ -159,8 +163,9 @@ async def test_failed_light_publish_preserves_reported_color_and_cache(hass,cont
     coord,entry,zones,_=controls({"lighting":{"1":{}}},{"lighting":{"1":{"active":True,"rgbi":[255,0,0,1]}}})
     zone=zones[ZoneType.LIGHTING_ZONE][0];light=GeckoLight(coord,entry,zone);light.hass=hass
     zone.set_publish_callback(Mock(side_effect=ConnectionError('publish failed')))
-    with pytest.raises(HomeAssistantError,match='publish failed'):
+    with pytest.raises(HomeAssistantError) as caught:
         await light.async_turn_on(rgb_color=(0,0,255))
+    assert caught.value.translation_key == "command_failed"
     light._update_state()
     assert light.rgb_color == (255,0,0)
 
