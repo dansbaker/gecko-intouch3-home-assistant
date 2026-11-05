@@ -4,7 +4,10 @@
 
 This is the continuation of Dan Baker's original community repository. The revived integration uses [Gecko's official integration](https://github.com/geckoal/ha-gecko-integration) as its code base, together with selected community fixes and improvements. It is maintained independently.
 
-Thank you to the Gecko team for building the official integration and IoT client and making their work available. Maintaining an open source Home Assistant integration takes sustained work: keeping up with Home Assistant, supporting different spa configurations, investigating reports and reviewing contributions. We appreciate that effort and want to build on it constructively.
+Thank you to the Gecko team for building the official integration and IoT client and making their work available. I know this was a passion project for the Gecko team and that they put a lot of time into it. Unfortunately, since launching the official repo the development seems to have stalled. Bug reports go largely unanswered, community pull requests go unmerged. We now have a dozen forks implementing their own bug fixes and feature extensions, creating a confusing landscape for users who just want to control their spa with Home Assistant. I have decided to ressurect my repository and to build out the best Gecko integration possible. I have included features and fixes from other forks (credit given below) as well as pull requests against the official repo. I've sigificantly improved on the reliability of the integration by implementing HA best practices and extending unit test coverage. I welcome pull requests against this repo.
+
+## What this isn't
+I'm one person and I own exactly one spa. It's a pretty basic one at that. Some of you have swim spas, waterlabs, RGB lighting, etc. I can't test this stuff. I can check the code looks good but it's going to be up to the community (that's YOU) to contribute logs, pull requests and bug reports to help maintain the device compatbility.
 
 ## Features
 
