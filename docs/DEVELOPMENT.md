@@ -1,10 +1,10 @@
 # Gecko integration development
 
-The Home Assistant integration and its IoT client are maintained, tested and distributed together. HACS installs the complete `custom_components/gecko` directory. There is no separate client wheel, PyPI dependency, submodule, or client release process.
+The Home Assistant integration and its IoT client are maintained and tested in this repository. HACS installs the complete `custom_components/gecko` directory; that custom installation still needs no separate client package or submodule. As preparation for core adoption, the root `pyproject.toml` also builds a standalone client wheel and source archive from the same source tree. The package is not published. See [CLIENT_PACKAGE.md](CLIENT_PACKAGE.md) for build checks and the current packaging boundary.
 
 ## Core adoption direction
 
-The bundled layout below describes today's custom installation. The goal is Home Assistant Core inclusion. Its requirements call for a separately published protocol library; we can keep that package and the integration in this repository. See [CORE_ADOPTION.md](CORE_ADOPTION.md) for the researched acceptance criteria, licensing/OAuth questions and staged transition. Packaging has not changed yet.
+The bundled layout below describes today's custom installation. The goal is Home Assistant Core inclusion. Its requirements call for a separately published protocol library; we can keep that package and the integration in this repository. See [CORE_ADOPTION.md](CORE_ADOPTION.md) for the researched acceptance criteria, licensing/OAuth questions and staged transition. Local standalone packaging is now implemented; HACS imports and deployment remain bundled.
 
 ## Source layout
 
@@ -57,3 +57,19 @@ coverage of `config_flow.py`. To reproduce:
 The gate fails when the flow is absent, branches were not measured, or any line
 or branch is uncovered. This is the initial Bronze-focused gate; it does not
 claim that other integration modules meet Silver's per-module threshold.
+
+
+## Standalone client build milestone
+
+The provisional distribution is `gecko-intouch3-client`, import namespace
+`gecko_iot_client`, development version `3.0.0.dev0`. The source version identifier
+replaces the earlier `1.0.3+bundled` consolidation marker. Original client source
+provenance and its GPL license are retained. The root build configuration maps
+only client packages into the wheel; it does not package Home Assistant entities.
+Both the wheel and rebuilt source archive have been imported and exercised in a
+fresh environment without Home Assistant installed. A dedicated CI workflow
+repeats that verification. No PyPI publishing workflow is enabled yet.
+
+Some protocol-oriented telemetry/Waterlab helpers still live beside HA modules.
+Move those to a well-defined public client API and make the future core adapter
+consume an approved public client release before considering the boundary complete.

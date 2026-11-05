@@ -54,7 +54,9 @@ standalone client package under `packages/gecko_client`, with its own
 repository can produce the client distribution and maintain the custom integration;
 core would pin a public release of that client. A separate GitHub repository is
 not necessary for this proposal. Package naming, release ownership and the exact
-layout remain design work. No packaging or import changes have been made yet.
+layout remain design work. A local standalone package prototype now builds from
+the existing nested source tree using root build metadata; import/deployment
+behavior for the HACS integration has not changed. See [CLIENT_PACKAGE.md](CLIENT_PACKAGE.md).
 
 Before publishing, settle source licensing and provenance. The integration has
 Apache-2.0 notices, while the inherited client carries GPL-3.0-or-later. The core
@@ -178,3 +180,30 @@ with **100% config-flow line and branch coverage**. CI collects overall branch
 coverage and enforces the full-flow gate. Formatting/lint checks pass for the
 new flow, entity lifecycle, test and coverage-gate modules. This is not a full
 core lint/hassfest run, nor a claim that Bronze has been awarded.
+
+
+## Standalone client packaging milestone (5 November 2026)
+
+A wheel and source archive now build from one source tree in this repository.
+The provisional `gecko-intouch3-client` distribution has development version
+`3.0.0.dev0`, retains the inherited GPL license, and is not published or reserved
+on PyPI. The wheel contains client modules, metadata and license/type-marker
+files; it contains no HA integration modules. Verification succeeds for both
+wheel installation and a fresh build/install of the source archive in an
+isolated environment without Home Assistant. The checker exercises parser
+configuration, pump/light wire payloads and operation-mode normalization.
+
+CI builds/verifies these artifacts separately from the HA test job. This prepares
+the installable-library boundary; it does not yet satisfy public release,
+license-compatibility or thin-core-adapter requirements. Protocol helper
+extraction and changing the future core adapter to consume a public client
+release remain outstanding. The custom integration still imports the bundled
+namespace, preventing a mixed-model installation during this transition.
+
+
+After both milestones, the full local suite remains at **423 passing tests and
+46 passing subtests**. Overall statement coverage is **72.4%** and branch
+coverage is **59.2%**, with full config-flow line/branch coverage. The rise from
+the earlier aggregate measurement comes from new HA flow/platform/lifecycle
+exercise, not removing source files from the coverage denominator. It is still
+below Silver's requirement and does not establish hardware-level behavior.

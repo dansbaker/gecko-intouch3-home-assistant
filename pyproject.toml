@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gecko-intouch3-client"
+version = "3.0.0.dev0"
+description = "Gecko in.touch 3 API and MQTT client, maintained with the Home Assistant integration"
+readme = "docs/CLIENT_PACKAGE.md"
+requires-python = ">=3.14"
+license = "GPL-3.0-or-later"
+license-files = ["custom_components/gecko/gecko_iot_client/LICENSE"]
+authors = [{name = "Gecko Alliance and community contributors"}]
+dependencies = [
+    "aiohttp>=3.11.0",
+    "awscrt==0.36.1",
+    "awsiotsdk==1.31.0",
+]
+
+[project.urls]
+Source = "https://github.com/dansbaker/gecko-intouch3-home-assistant"
+Issues = "https://github.com/dansbaker/gecko-intouch3-home-assistant/issues"
+
+[tool.setuptools]
+package-dir = {"" = "custom_components/gecko"}
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = ["custom_components/gecko"]
+include = ["gecko_iot_client", "gecko_iot_client.*"]
+namespaces = false
+
+[tool.setuptools.package-data]
+gecko_iot_client = ["LICENSE", "py.typed"]

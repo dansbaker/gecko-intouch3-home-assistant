@@ -84,7 +84,7 @@ class ConfigFlow(config_entry_oauth2_flow.AbstractOAuth2FlowHandler, domain=DOMA
                 self._reauthorize_required = True
             except ClientResponseError as err:
                 self._reauthorize_required = err.status in (401, 403)
-            except (OSError, ValueError, TypeError, ClientError):
+            except OSError, ValueError, TypeError, ClientError:
                 _LOGGER.debug("Gecko account validation failed", exc_info=True)
             else:
                 return await self._async_finish_account(
@@ -127,7 +127,7 @@ class ConfigFlow(config_entry_oauth2_flow.AbstractOAuth2FlowHandler, domain=DOMA
                             account_id, str(monitor_id)
                         )
                     vessel = {**vessel, "spa_configuration": configuration}
-                except (OSError, ValueError, TypeError, ClientError):
+                except OSError, ValueError, TypeError, ClientError:
                     # Optional metadata must not prevent using valid account/vessel data.
                     _LOGGER.debug(
                         "Optional spa configuration unavailable", exc_info=True

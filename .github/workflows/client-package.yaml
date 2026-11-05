@@ -1,0 +1,27 @@
+name: Client package
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install build
+          python -m build --outdir dist
+      - name: Install and verify wheel without Home Assistant
+        run: |
+          python -m pip install dist/*.whl
+          python script/verify_client_package.py
+      - name: Rebuild and verify source distribution
+        run: |
+          python -m pip install --force-reinstall --no-deps dist/*.tar.gz
+          python script/verify_client_package.py

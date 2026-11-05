@@ -15,3 +15,8 @@ htmlcov/
 
 # Generated coverage reports
 coverage.json
+
+# Standalone client build artifacts
+build/
+dist/
+*.egg-info/
