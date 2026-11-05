@@ -25,6 +25,8 @@ For manual installation, copy the complete `custom_components/gecko` directory i
 
 Then open **Settings → Devices & services → Add integration → Gecko** and follow the Gecko OAuth login. Keep Home Assistant's **My** integration enabled for the standard callback. If a login has lost its refresh token, use the prompted reauthentication flow.
 
+If Gecko has issued OAuth credentials for your application, the integration also supports Home Assistant-managed [application credentials](docs/OAUTH.md). The existing bundled login remains available.
+
 ### Existing installations
 
 This build uses the official integration's `gecko` domain. Replace the existing `custom_components/gecko` files as a complete directory, then restart. It retains official config-entry data and migrates older name-based entity identifiers where possible.

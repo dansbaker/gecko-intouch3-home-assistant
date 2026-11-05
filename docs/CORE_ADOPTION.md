@@ -207,3 +207,20 @@ coverage is **59.2%**, with full config-flow line/branch coverage. The rise from
 the earlier aggregate measurement comes from new HA flow/platform/lifecycle
 exercise, not removing source files from the coverage denominator. It is still
 below Silver's requirement and does not establish hardware-level behavior.
+
+
+## Managed OAuth application credentials (5 November 2026)
+
+The integration now exposes HA's application-credentials platform. Named stored
+credentials provide an independent PKCE implementation; existing entries retain
+their original provider and the bundled custom-integration login remains available.
+Tests exercise credential storage/lookup, selected-provider flow completion,
+S256 verification, code-exchange fields, token renewal and transient/permanent
+failure classification. The two OAuth implementation modules have full measured
+line coverage, and config-flow line/branch coverage remains 100%.
+
+This completes the local managed-credentials route, not Gecko's credential
+issuance/callback approval or a live OAuth deployment test. Before submitting a
+core adapter, settle how ordinary users obtain valid credentials and remove the
+custom-only hardcoded fallback from that adapter without stranding custom users.
+See [OAUTH.md](OAUTH.md) for current behavior and installation parameters.

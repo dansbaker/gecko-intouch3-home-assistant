@@ -6,6 +6,7 @@
   ],
   "config_flow": true,
   "dependencies": [
+    "application_credentials",
     "my"
   ],
   "documentation": "https://github.com/dansbaker/gecko-intouch3-home-assistant",

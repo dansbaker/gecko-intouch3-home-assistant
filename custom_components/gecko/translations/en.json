@@ -90,5 +90,8 @@
         }
       }
     }
+  },
+  "application_credentials": {
+    "description": "Use OAuth application credentials issued for your Gecko integration. The application must allow Home Assistant's OAuth callback and the Gecko API audience. Contact Gecko for credential access and permissions; a spa account login is not an application credential. Existing custom-integration users may continue using the bundled login."
   }
 }
