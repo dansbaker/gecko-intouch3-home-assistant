@@ -62,7 +62,7 @@ claim that other integration modules meet Silver's per-module threshold.
 ## Standalone client build milestone
 
 The provisional distribution is `gecko-intouch3-client`, import namespace
-`gecko_iot_client`, development version `3.0.0.dev0`. The source version identifier
+`gecko_iot_client`, development version `3.0.0.dev1`. The source version identifier
 replaces the earlier `1.0.3+bundled` consolidation marker. Original client source
 provenance and its GPL license are retained. The root build configuration maps
 only client packages into the wheel; it does not package Home Assistant entities.
@@ -70,6 +70,10 @@ Both the wheel and rebuilt source archive have been imported and exercised in a
 fresh environment without Home Assistant installed. A dedicated CI workflow
 repeats that verification. No PyPI publishing workflow is enabled yet.
 
-Some protocol-oriented telemetry/Waterlab helpers still live beside HA modules.
-Move those to a well-defined public client API and make the future core adapter
-consume an approved public client release before considering the boundary complete.
+Protocol-oriented telemetry, Waterlab, shadow metrics, lighting and connectivity
+helpers now live under `gecko_iot_client/helpers`. HA imports this shared source
+through its bundled namespace and standalone consumers through `gecko_iot_client`.
+Their original Apache-2.0 licensing and attribution are preserved alongside the
+inherited GPL client license. No module aliases or duplicate source copies are
+used. The future core adapter still needs to consume an approved public client
+release and finish auditing the raw-data/model API boundary.

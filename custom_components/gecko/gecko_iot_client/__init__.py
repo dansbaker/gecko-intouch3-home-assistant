@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 # Source baseline; this client is distributed with the integration.
-__version__ = "3.0.0.dev0"
+__version__ = "3.0.0.dev1"
 
 
 class GeckoIotClient:

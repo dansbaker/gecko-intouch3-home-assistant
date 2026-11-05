@@ -6,8 +6,8 @@ from aiohttp import ClientResponseError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.gecko.coordinator import GeckoVesselCoordinator
 from custom_components.gecko.sensor import GeckoWaterlabSensor
-from custom_components.gecko.waterlab import extract_readings
-from custom_components.gecko.shadow_metrics import extract_extension_metrics, water_quality_kind
+from custom_components.gecko.gecko_iot_client.helpers.waterlab import extract_readings
+from custom_components.gecko.gecko_iot_client.helpers.shadow_metrics import extract_extension_metrics, water_quality_kind
 
 
 def test_v6_chemistry_records_preserve_source_and_units():

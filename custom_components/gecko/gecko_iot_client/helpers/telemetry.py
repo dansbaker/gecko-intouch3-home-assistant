@@ -1,13 +1,16 @@
 """Shared telemetry helpers for Gecko entities."""
 
+# SPDX-License-Identifier: Apache-2.0
+# Extracted from the community HA integration; see ../NOTICE and ../LICENSE-APACHE.
+
 from __future__ import annotations
 
-from enum import Enum
 import math
+from enum import Enum
 from typing import Any
 
-from .gecko_iot_client.models.flow_zone import FlowZoneInitiator
-from .gecko_iot_client.models.zone_types import ZoneType
+from ..models.flow_zone import FlowZoneInitiator
+from ..models.zone_types import ZoneType
 
 FLOW_SPEED_MODE_OPTIONS: tuple[str, ...] = ("off", "low", "medium", "high", "max")
 USER_FLOW_INITIATORS: frozenset[str] = frozenset(
@@ -201,9 +204,7 @@ def _extract_device_telemetry(
     rf_channel = _find_named_field(reported, {"rfchannel"}, reported_path)
 
     # Some shadow versions put generic signal/channel keys inside an RF object.
-    rf_mapping, rf_path = _find_module_mapping(
-        reported, {"rf", "radio"}, reported_path
-    )
+    rf_mapping, rf_path = _find_module_mapping(reported, {"rf", "radio"}, reported_path)
     telemetry_mapping, telemetry_path = _find_module_mapping(
         reported,
         {"devicetelemetry", "telemetry"},
@@ -488,7 +489,10 @@ def get_flow_speed_step_values(zone: Any) -> tuple[float, ...]:
     step = _as_float(speed_config.get("stepIncrement"))
     if minimum is None or maximum is None or step is None:
         return ()
-    if not all(math.isfinite(value) for value in (minimum, maximum, step)) or maximum < minimum:
+    if (
+        not all(math.isfinite(value) for value in (minimum, maximum, step))
+        or maximum < minimum
+    ):
         return ()
     if maximum == minimum and maximum > 0:
         return (maximum,)
@@ -510,10 +514,13 @@ def get_flow_speed_step_values(zone: Any) -> tuple[float, ...]:
     return tuple(values)
 
 
-def _reports_binary_near_max_speed_encoding(zone: Any) -> bool:
+def reports_binary_near_max_speed_encoding(zone: Any) -> bool:
     """Remember observed 99/100 readback, never infer it from 100 alone."""
     config = getattr(zone, "speed_config", None)
-    if config and (config.get("minimum", 0) == config.get("maximum") or config.get("stepIncrement", 0) == 1):
+    if config and (
+        config.get("minimum", 0) == config.get("maximum")
+        or config.get("stepIncrement", 0) == 1
+    ):
         return False
     if getattr(zone, "_binary_speed_readback", False):
         return True
@@ -548,7 +555,7 @@ def get_supported_flow_speed_modes(zone: Any) -> tuple[str, ...]:
                 ordered_modes.append(mode)
         return tuple(ordered_modes)
 
-    if _reports_binary_near_max_speed_encoding(zone):
+    if reports_binary_near_max_speed_encoding(zone):
         return ("low", "high")
 
     return FLOW_SPEED_MODE_OPTIONS[1:]
@@ -569,7 +576,7 @@ def get_flow_speed_value_for_mode(zone: Any, mode: str) -> float | int | None:
         if matching_values:
             return matching_values[len(matching_values) // 2]
 
-    if _reports_binary_near_max_speed_encoding(zone):
+    if reports_binary_near_max_speed_encoding(zone):
         # The 99/100 values are a readback encoding for the two physical
         # states, not the percentages accepted by FlowZone.set_speed().
         return {
@@ -772,7 +779,11 @@ def is_manual_flow_demand(
 ) -> bool:
     """Return True when the active flow zone was manually started by the user."""
     reason = get_flow_manual_demand_reason(zone, spa_state, temperature_zones)
-    return reason in {"user_demand_initiator", "unknown_initiator_fallback", "no_initiator_fallback"}
+    return reason in {
+        "user_demand_initiator",
+        "unknown_initiator_fallback",
+        "no_initiator_fallback",
+    }
 
 
 def derive_flow_speed_mode(zone: Any) -> str | None:
@@ -787,7 +798,7 @@ def derive_flow_speed_mode(zone: Any) -> str | None:
     if speed <= 0:
         return "off"
 
-    if _reports_binary_near_max_speed_encoding(zone):
+    if reports_binary_near_max_speed_encoding(zone):
         return "high" if speed >= 99.5 else "low"
 
     step_values = get_flow_speed_step_values(zone)
@@ -798,7 +809,7 @@ def derive_flow_speed_mode(zone: Any) -> str | None:
         )
         return _get_mode_label_for_step_index(nearest_step_index, len(step_values))
 
-    if _reports_binary_near_max_speed_encoding(zone):
+    if reports_binary_near_max_speed_encoding(zone):
         return "high" if speed >= 99.5 else "low"
 
     # Some spas report discrete preset indexes instead of percentages.
@@ -825,7 +836,7 @@ def derive_flow_percentage(zone: Any) -> int:
     speed = _as_float(getattr(zone, "speed", None))
     if speed is None:
         return 0
-    if _reports_binary_near_max_speed_encoding(zone):
+    if reports_binary_near_max_speed_encoding(zone):
         return 100 if speed >= 99.5 else 50
     steps = get_flow_speed_step_values(zone)
     if steps:

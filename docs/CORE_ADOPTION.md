@@ -224,3 +224,31 @@ issuance/callback approval or a live OAuth deployment test. Before submitting a
 core adapter, settle how ordinary users obtain valid credentials and remove the
 custom-only hardcoded fallback from that adapter without stranding custom users.
 See [OAUTH.md](OAUTH.md) for current behavior and installation parameters.
+
+
+## Protocol-helper extraction (5 November 2026)
+
+Telemetry interpretation, sparse connectivity semantics, RGB payload helpers,
+reported extension metrics and Waterlab parsing now reside in the client package
+under `helpers`. HA imports the same source through the bundled namespace. The
+old adapter-side helper files were removed; model/enum imports remain in one
+namespace per process. Existing behavior tests were moved to the new imports.
+
+The extracted helpers retain their Apache-2.0 license, per-file SPDX markers and
+contributor attribution. Both license texts and a provenance NOTICE ship in the
+client distribution; metadata explicitly lists both licenses. Original client
+licensing is unchanged. This does not resolve core license compatibility.
+
+The standalone checker now also exercises Waterlab readings, calibration
+exclusion, speed interpretation, RGB payloads, credential redaction and sparse
+connectivity without HA installed. Local development package version is
+`3.0.0.dev1`; neither development version has been published. A thin-core-adapter
+import switch must wait for an appropriate public dependency release, and the
+remaining raw-data API boundary still needs review.
+
+
+Both the managed-credentials and extraction milestones pass the complete local
+suite: **433 tests and 46 subtests**. Full config-flow line/branch coverage remains
+enforced. New OAuth provider modules have full measured line coverage. The
+standalone wheel and a rebuild/install from the source archive pass the expanded
+client checks without HA installed. No package, PR, release or push was published.

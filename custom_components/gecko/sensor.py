@@ -29,11 +29,11 @@ from .gecko_iot_client.models.temperature_control_zone import (
 )
 from .gecko_iot_client.models.zone_types import ZoneType
 
-from .shadow_metrics import extract_extension_metrics, water_quality_kind, humanize_shadow_path, is_calibration_path, MAX_EXTENSION_METRICS
+from .gecko_iot_client.helpers.shadow_metrics import extract_extension_metrics, water_quality_kind, humanize_shadow_path, is_calibration_path, MAX_EXTENSION_METRICS
 from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
-from .telemetry import (
+from .gecko_iot_client.helpers.telemetry import (
     FLOW_SPEED_MODE_OPTIONS,
     derive_flow_speed_mode,
     get_flow_initiators,

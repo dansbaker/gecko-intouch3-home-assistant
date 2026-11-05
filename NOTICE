@@ -56,3 +56,12 @@ gecko-intouch3-client, version 3.0.0.dev0. The import package remains
 gecko_iot_client; the current custom integration still uses its bundled relative
 namespace. Package metadata preserves the inherited client license. This does
 not change source ownership or establish license approval for core inclusion.
+
+EXTRACTED PROTOCOL HELPERS
+
+Protocol helpers formerly beside the HA adapter now live under
+custom_components/gecko/gecko_iot_client/helpers. They retain their original
+Apache-2.0 license, per-file SPDX identification and author attribution. Both
+license texts and a provenance NOTICE are included in the standalone client
+artifacts. The original client source remains GPL-3.0-or-later. Combined package
+metadata lists both licenses; no inherited source has been relicensed.

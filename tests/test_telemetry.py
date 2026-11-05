@@ -1,7 +1,7 @@
 """Telemetry tests adapted from upstream PR 37 against bundled models."""
 import unittest
 from types import SimpleNamespace
-from custom_components.gecko import telemetry
+from custom_components.gecko.gecko_iot_client.helpers import telemetry
 from custom_components.gecko.gecko_iot_client.models.flow_zone import FlowZoneInitiator
 from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
 

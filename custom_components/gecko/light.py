@@ -12,7 +12,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.core import callback
 
-from .lighting import split_brightness, rgbi_payload
+from .gecko_iot_client.helpers.lighting import split_brightness, rgbi_payload
 from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin

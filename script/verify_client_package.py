@@ -16,7 +16,9 @@ def main() -> None:
 
     distribution = metadata.distribution("gecko-intouch3-client")
     assert distribution.version == client.__version__
-    assert distribution.metadata["License-Expression"] == "GPL-3.0-or-later"
+    assert (
+        distribution.metadata["License-Expression"] == "GPL-3.0-or-later AND Apache-2.0"
+    )
     assert (
         Path(client.__file__)
         .resolve()
@@ -24,6 +26,8 @@ def main() -> None:
     )
     assert Path(client.__file__).with_name("LICENSE").is_file()
     assert Path(client.__file__).with_name("py.typed").is_file()
+    assert Path(client.__file__).with_name("LICENSE-APACHE").is_file()
+    assert Path(client.__file__).with_name("NOTICE").is_file()
     assert not any(
         "homeassistant" in requirement.lower()
         for requirement in distribution.requires or []
@@ -69,6 +73,41 @@ def main() -> None:
     modes.set_publish_callback(lambda feature, payload: published.append(payload))
     modes.set_mode_by_name("Super Savings")
     assert published.pop() == {"operationMode": 3}
+    from gecko_iot_client.helpers.connectivity import preserve_known_connectivity_value
+    from gecko_iot_client.helpers.lighting import rgbi_payload
+    from gecko_iot_client.helpers.shadow_metrics import water_quality_kind
+    from gecko_iot_client.helpers.telemetry import (
+        get_flow_speed_step_values,
+        redact_raw_api_payload,
+        reports_binary_near_max_speed_encoding,
+    )
+    from gecko_iot_client.helpers.waterlab import extract_readings
+
+    assert (
+        extract_readings(
+            {"status": {"readings": {"ph": {"value": 7.4, "source": "monitor"}}}}
+        )["ph"]["value"]
+        == 7.4
+    )
+    assert water_quality_kind("zones.waterlab.ph.calibration.value") is None
+    assert water_quality_kind("zones.waterlab.ph.value") == "ph"
+    assert get_flow_speed_step_values(pump) == (50, 100)
+    assert not reports_binary_near_max_speed_encoding(pump)
+    parser.apply_state_to_zones(
+        zones,
+        {
+            "state": {
+                "reported": {"zones": {"flow": {"1": {"speed": 99, "active": True}}}}
+            }
+        },
+    )
+    assert reports_binary_near_max_speed_encoding(pump)
+    assert redact_raw_api_payload({"token": "secret", "reading": 7.4}) == {
+        "token": "<redacted>",
+        "reading": 7.4,
+    }
+    assert rgbi_payload((255, 0, 0), 128) == [128, 0, 0, 1]
+    assert preserve_known_connectivity_value("CONNECTED", "UNKNOWN") == "CONNECTED"
     print(
         f"Standalone client {distribution.version}: metadata, imports and command checks passed"
     )

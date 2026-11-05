@@ -26,7 +26,7 @@ from custom_components.gecko.gecko_iot_client.models.operation_mode_controller i
 from custom_components.gecko.gecko_iot_client.models.operation_mode import OperationMode
 from custom_components.gecko.gecko_iot_client.models.flow_zone import FlowZoneInitiator
 from custom_components.gecko.gecko_iot_client.transporters.mqtt.client import MqttClient
-from custom_components.gecko import telemetry
+from custom_components.gecko.gecko_iot_client.helpers import telemetry
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ async def test_pump_commands_use_parser_preserved_configuration(hass, controls, 
 async def test_full_speed_alone_does_not_imply_two_speed_pump(controls):
     coord,entry,zones,_=controls({"flow":{"1":{}}},{"flow":{"1":{"active":True,"speed":100}}})
     zone=zones[ZoneType.FLOW_ZONE][0]
-    assert not telemetry._reports_binary_near_max_speed_encoding(zone)
+    assert not telemetry.reports_binary_near_max_speed_encoding(zone)
     fan=GeckoFan(coord,entry,zone)
     assert fan.speed_count == 1
 

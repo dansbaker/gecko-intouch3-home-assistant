@@ -1,9 +1,11 @@
 """Connectivity helpers for Gecko cloud-shadow updates."""
 
+# SPDX-License-Identifier: Apache-2.0
+# Extracted from the community HA integration; see ../NOTICE and ../LICENSE-APACHE.
+
 from __future__ import annotations
 
 from typing import Any
-
 
 UNKNOWN_CONNECTIVITY_VALUES = frozenset(("", "UNKNOWN"))
 
@@ -36,6 +38,8 @@ def is_fully_connected(
     vessel_status: Any,
 ) -> bool:
     """Return whether the cloud transport, gateway, and vessel are usable."""
-    return bool(transport_connected) and connectivity_value(
-        gateway_status
-    ) == "CONNECTED" and connectivity_value(vessel_status) in ("RUNNING", "READY")
+    return (
+        bool(transport_connected)
+        and connectivity_value(gateway_status) == "CONNECTED"
+        and connectivity_value(vessel_status) in ("RUNNING", "READY")
+    )

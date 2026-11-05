@@ -35,7 +35,7 @@ for module in (climate, coordinator, fan, light):
     assert module.ZoneType is ZoneType
 assert Path(client.__file__).is_relative_to(Path.cwd())
 assert Path(client.__file__).with_name('LICENSE').is_file()
-assert client.__version__ == '3.0.0.dev0'
+assert client.__version__ == '3.0.0.dev1'
 """],
                 cwd=stage,
                 capture_output=True,

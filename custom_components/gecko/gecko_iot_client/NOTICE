@@ -1,0 +1,71 @@
+Gecko Home Assistant Integration
+Copyright 2025-2026 Gecko Alliance
+
+This product includes software developed by Gecko Alliance.
+
+IMPORTANT NOTICES:
+
+1. TRADEMARK USAGE
+   "Gecko" and related trademarks are the property of Gecko Alliance.
+   Use of these marks is restricted to describing the origin and functionality
+   of this software. No rights are granted to use these marks for commercial
+   purposes or in a manner that implies endorsement.
+
+2. INTENDED USE
+   This software is designed specifically for integration with Home Assistant
+   to control Gecko Alliance spa and pool equipment. Use for other purposes
+   may violate the terms of service of the Gecko IoT platform.
+
+3. API USAGE RESTRICTIONS
+   This integration connects to Gecko Alliance's proprietary cloud infrastructure.
+   Users must comply with Gecko Alliance's Terms of Service and API usage policies.
+   Commercial use of this integration may require separate authorization from
+   Gecko Alliance.
+
+4. NO WARRANTY
+   This software is provided "AS IS" without warranty of any kind. Gecko Alliance
+   makes no representations about the suitability of this software for any purpose.
+   Use of this software with spa or pool equipment is at your own risk.
+
+5. DATA AND PRIVACY
+   This integration processes data from your Gecko-powered devices. Users are
+   responsible for ensuring their use complies with applicable privacy laws and
+   regulations.
+
+For questions about commercial use, licensing, or partnerships, please contact:
+Gecko Alliance - https://www.geckoalliance.com
+
+Third-party dependencies are listed in the manifest.json file and are subject
+to their own licenses.
+
+BUNDLED GECKO IOT CLIENT
+
+The client under custom_components/gecko/gecko_iot_client originates from
+https://github.com/geckoal/gecko-iot-client, commit
+b799e0cef27099b18d87f52be359353d7ec53c1e (v1.0.3).
+Its GPL-3.0-or-later license is preserved in that directory as LICENSE.
+The integration LICENSE continues to describe the integration source.
+Local changes relocate imports, identify the bundled source, and repair models,
+command delivery and MQTT configuration. See docs/RESTORATION.md and the README
+for source attribution and community changes.
+
+STANDALONE BUILD PREPARATION
+
+The same client sources can now be built as the unpublished development package
+gecko-intouch3-client, version 3.0.0.dev0. The import package remains
+gecko_iot_client; the current custom integration still uses its bundled relative
+namespace. Package metadata preserves the inherited client license. This does
+not change source ownership or establish license approval for core inclusion.
+
+EXTRACTED INTEGRATION HELPERS
+
+The modules under gecko_iot_client/helpers originate from the Apache-2.0
+licensed community HA integration, based on Gecko Alliance's official
+integration (aaf94de). They retain Apache-2.0, documented per file, and
+LICENSE-APACHE is included. They have not been relicensed as GPL source.
+The original client sources retain their inherited GPL-3.0-or-later license.
+
+Helper contributions/adaptations include @karlg100 (telemetry/connectivity),
+@nmonteleone18 (RGB normalization), @markus-lassfolk (Waterlab/shadow
+interpretation), and @dansbaker (reviewed community restoration). Source
+review and detailed attribution remain in the repository README and docs.

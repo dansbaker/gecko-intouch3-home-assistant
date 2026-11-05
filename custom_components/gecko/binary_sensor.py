@@ -25,7 +25,7 @@ from .coordinator import GeckoVesselCoordinator
 from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
 from . import GeckoConfigEntry
 from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
-from .telemetry import (
+from .gecko_iot_client.helpers.telemetry import (
     get_flow_initiators,
     get_flow_manual_demand_reason,
     get_flow_runtime_state,

@@ -17,10 +17,10 @@ from homeassistant.helpers.singleton import singleton
 from homeassistant.util.hass_dict import HassKey
 
 from .aws_compat import ensure_aws_crt_compatible
-from .connectivity import (
+from .gecko_iot_client.helpers.connectivity import (
     is_fully_connected as connectivity_is_fully_connected,
 )
-from .connectivity import (
+from .gecko_iot_client.helpers.connectivity import (
     preserve_known_connectivity_value,
 )
 from .const import CONFIG_TIMEOUT, DOMAIN

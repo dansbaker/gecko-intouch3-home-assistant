@@ -75,4 +75,4 @@ Our long-term goal is inclusion in Home Assistant Core, with Gold as the quality
 
 ## Source and licensing
 
-Gecko Alliance's original integration license and notices are retained in [LICENSE](LICENSE) and [NOTICE](NOTICE). The bundled IoT client retains its [GPL-3.0-or-later license](custom_components/gecko/gecko_iot_client/LICENSE). The distribution includes both sets of source and notices; the root Apache license does not replace the client's GPL license. Gecko trademarks belong to Gecko Alliance.
+Gecko Alliance's original integration license and notices are retained in [LICENSE](LICENSE) and [NOTICE](NOTICE). The original IoT client sources retain their [GPL-3.0-or-later license](custom_components/gecko/gecko_iot_client/LICENSE). Extracted integration helpers retain [Apache-2.0](custom_components/gecko/gecko_iot_client/LICENSE-APACHE), with attribution in the [client NOTICE](custom_components/gecko/gecko_iot_client/NOTICE). The distribution includes both sets of source and notices; the root Apache license does not replace the client's GPL license. Gecko trademarks belong to Gecko Alliance.

@@ -21,7 +21,7 @@ from .gecko_iot_client.models.zone_types import ZoneType, AbstractZone
 from .aws_compat import AwsCrtCompatibilityError
 from .const import DOMAIN
 from .connection_manager import async_get_connection_manager
-from .telemetry import (
+from .gecko_iot_client.helpers.telemetry import (
     DEVICE_TELEMETRY_KEYS,
     get_device_metadata_candidate_paths,
     get_device_telemetry,
@@ -158,7 +158,7 @@ class GeckoVesselCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         from datetime import datetime, timezone
         from aiohttp import ClientError, ClientResponseError
         from homeassistant.exceptions import ConfigEntryAuthFailed
-        from .waterlab import extract_readings
+        from .gecko_iot_client.helpers.waterlab import extract_readings
 
         now = self.hass.loop.time()
         if self._waterlab_poll_disabled or now < self._waterlab_next_poll:

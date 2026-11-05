@@ -18,10 +18,10 @@ from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
 from . import GeckoConfigEntry
-from .telemetry import (
+from .gecko_iot_client.helpers.telemetry import (
     derive_flow_percentage,
     get_flow_speed_step_values,
-    _reports_binary_near_max_speed_encoding,
+    reports_binary_near_max_speed_encoding,
     derive_flow_speed_mode,
     get_flow_initiators,
     get_non_user_flow_initiators,
@@ -107,7 +107,7 @@ class GeckoFan(GeckoZoneEntityMixin, GeckoEntityAvailabilityMixin, CoordinatorEn
         if zone is None:
             return 1
         steps = get_flow_speed_step_values(zone)
-        return len(steps) or (2 if _reports_binary_near_max_speed_encoding(zone) else 1)
+        return len(steps) or (2 if reports_binary_near_max_speed_encoding(zone) else 1)
 
     def _update_from_zone(self) -> None:
         zone = self._current_zone()
@@ -156,7 +156,7 @@ class GeckoFan(GeckoZoneEntityMixin, GeckoEntityAvailabilityMixin, CoordinatorEn
         if steps:
             index = math.ceil(min(100, percentage) * len(steps) / 100) - 1
             speed = steps[max(0, index)]
-        elif _reports_binary_near_max_speed_encoding(zone):
+        elif reports_binary_near_max_speed_encoding(zone):
             speed = 50 if percentage <= 50 else 100
         else:
             # Without a configured ladder, do not invent numeric command values.
@@ -212,7 +212,7 @@ class GeckoFan(GeckoZoneEntityMixin, GeckoEntityAvailabilityMixin, CoordinatorEn
             if index is None:
                 raise HomeAssistantError(f"Unsupported pump speed: {speed}")
             await self.async_set_percentage(math.ceil((index + 1) * 100 / len(steps)))
-        elif _reports_binary_near_max_speed_encoding(zone) and speed in ("low", "high", "max"):
+        elif reports_binary_near_max_speed_encoding(zone) and speed in ("low", "high", "max"):
             await self._async_zone_command(zone.set_speed, 50 if speed == "low" else 100)
         else:
             await self._async_zone_command(zone.activate)

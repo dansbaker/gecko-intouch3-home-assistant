@@ -1,4 +1,8 @@
 """RGB normalization adapted from @nmonteleone18's Gecko fork."""
+
+# SPDX-License-Identifier: Apache-2.0
+# Extracted from the community HA integration; see ../NOTICE and ../LICENSE-APACHE.
+
 from __future__ import annotations
 
 
@@ -17,4 +21,3 @@ def rgbi_payload(
     full, _ = split_brightness(rgb)
     level = max(0, min(255, int(brightness)))
     return [*(round(c * level / 255) for c in full), intensity]
-
