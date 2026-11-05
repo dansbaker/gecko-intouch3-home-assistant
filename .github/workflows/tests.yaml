@@ -23,3 +23,5 @@ jobs:
         run: python -m pytest --cov=custom_components.gecko --cov-branch --cov-report=term --cov-report=json:coverage.json
       - name: Enforce full config-flow coverage
         run: python script/check_config_flow_coverage.py coverage.json
+      - name: Enforce completed entity coverage targets
+        run: python script/check_entity_coverage.py coverage.json

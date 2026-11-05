@@ -1,0 +1,120 @@
+{
+  "entity": {
+    "sensor": {
+      "rf_signal_strength": {
+        "default": "mdi:signal"
+      },
+      "rf_channel": {
+        "default": "mdi:radio-tower"
+      },
+      "pack_configuration": {
+        "default": "mdi:package-variant-closed"
+      },
+      "home_firmware_version": {
+        "default": "mdi:chip"
+      },
+      "home_serial_number": {
+        "default": "mdi:identifier"
+      },
+      "spa_firmware_version": {
+        "default": "mdi:chip"
+      },
+      "spa_serial_number": {
+        "default": "mdi:identifier"
+      },
+      "raw_api_data": {
+        "default": "mdi:code-json"
+      },
+      "flow_status": {
+        "default": "mdi:waves-arrow-right"
+      },
+      "reported_ph": {
+        "default": "mdi:water-opacity"
+      },
+      "reported_orp": {
+        "default": "mdi:water-opacity"
+      },
+      "reported_metric": {
+        "default": "mdi:flask-outline"
+      },
+      "waterlab_ph": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_orp": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_watertemp": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_alkalinity": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_chlorine": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_bromine": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_hardness": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_cyanuricacid": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_freechlorine": {
+        "default": "mdi:water-opacity"
+      },
+      "waterlab_totalchlorine": {
+        "default": "mdi:water-opacity"
+      }
+    },
+    "binary_sensor": {
+      "gateway_status": {
+        "default": "mdi:router-wireless"
+      },
+      "vessel_status": {
+        "default": "mdi:hot-tub"
+      },
+      "transport_connection": {
+        "default": "mdi:cloud-check"
+      },
+      "overall_connection": {
+        "default": "mdi:connection"
+      },
+      "spa_in_use": {
+        "default": "mdi:hot-tub"
+      },
+      "eco_mode": {
+        "default": "mdi:leaf"
+      },
+      "heating": {
+        "default": "mdi:fire"
+      },
+      "zone_heating": {
+        "default": "mdi:fire"
+      },
+      "filtration": {
+        "default": "mdi:filter"
+      },
+      "flow_check": {
+        "default": "mdi:water-sync"
+      }
+    },
+    "fan": {
+      "pump": {
+        "default": "mdi:pump"
+      },
+      "blower": {
+        "default": "mdi:wind-power"
+      },
+      "waterfall": {
+        "default": "mdi:waterfall"
+      }
+    },
+    "select": {
+      "watercare_mode": {
+        "default": "mdi:hot-tub"
+      }
+    }
+  }
+}

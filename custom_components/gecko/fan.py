@@ -42,7 +42,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Gecko fan entities from a config entry."""
-    runtime_data = config_entry.runtime_data
+    runtime_data = getattr(config_entry, "runtime_data", None)
     if not runtime_data or not runtime_data.coordinators:
         _LOGGER.error(
             "No coordinators found in runtime_data for config entry %s",
@@ -96,17 +96,17 @@ class GeckoFan(
         super().__init__(coordinator)
         self._coordinator = coordinator
         self._zone = zone
-        self._attr_name = zone.name
+        self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_unique_id = (
             f"{config_entry.entry_id}_{coordinator.vessel_id}_pump_{zone.id}"
         )
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))}
         )
-        self._attr_icon = {
-            FlowZoneType.WATERFALL_ZONE: "mdi:waterfall",
-            FlowZoneType.BLOWER_ZONE: "mdi:wind-power",
-        }.get(zone.type, "mdi:pump")
+        self._attr_translation_key = {
+            FlowZoneType.WATERFALL_ZONE: "waterfall",
+            FlowZoneType.BLOWER_ZONE: "blower",
+        }.get(zone.type, "pump")
         self._attr_available = False
         self._attr_speed = None
         self._update_from_zone()

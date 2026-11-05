@@ -339,3 +339,144 @@ async def test_reload_preserves_control_registry_ids_and_uses_new_zones(
         )
         publish.assert_called_once()
     stale_publishes.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "percentage,expected",
+    [
+        (0, {"active": False}),
+        (1, {"speed": 50, "active": True}),
+        (51, {"speed": 100, "active": True}),
+    ],
+)
+async def test_pump_turn_on_percentage_uses_reported_ladder(
+    hass, controls, percentage, expected
+):
+    publish = Mock()
+    controls.entities["fan"]._current_zone().set_publish_callback(publish)
+    await call(hass, controls, "fan", "turn_on", {"percentage": percentage})
+    assert publish.call_args.args[-1] == expected
+
+
+@pytest.mark.parametrize("percentage,speed", [(25, 50), (75, 100)])
+async def test_observed_binary_pump_without_ladder_accepts_percentages(
+    hass, controls, percentage, speed
+):
+    entity = controls.entities["fan"]
+    zone = entity._current_zone()
+    zone.config.pop("speed")
+    zone.update_from_state({"active": True, "speed": 99})
+    controls.coordinator.async_update_listeners()
+    assert entity.speed_count == 2
+    publish = Mock()
+    zone.set_publish_callback(publish)
+    await call(hass, controls, "fan", "set_percentage", {"percentage": percentage})
+    assert publish.call_args.args[-1] == {"speed": speed, "active": True}
+
+
+@pytest.mark.parametrize(
+    "speed,expected",
+    [
+        ("off", {"active": False}),
+        ("low", {"speed": 50, "active": True}),
+        ("medium", {"speed": 50, "active": True}),
+        ("high", {"speed": 100, "active": True}),
+        ("max", {"speed": 100, "active": True}),
+    ],
+)
+async def test_legacy_pump_speed_entry_point_retains_ladder_mapping(
+    controls, speed, expected
+):
+    entity = controls.entities["fan"]
+    publish = Mock()
+    entity._current_zone().set_publish_callback(publish)
+    await entity.async_set_speed(speed)
+    assert publish.call_args.args[-1] == expected
+
+
+@pytest.mark.parametrize(
+    "binary,speed,expected",
+    [
+        (True, "low", {"speed": 50, "active": True}),
+        (True, "high", {"speed": 100, "active": True}),
+        (True, "medium", {"active": True}),
+        (False, "high", {"active": True}),
+    ],
+)
+async def test_legacy_pump_without_ladder_does_not_invent_speed_values(
+    controls, binary, speed, expected
+):
+    entity = controls.entities["fan"]
+    zone = entity._current_zone()
+    zone.config.pop("speed")
+    zone.update_from_state({"active": True, "speed": 99 if binary else 100})
+    controls.coordinator.async_update_listeners()
+    publish = Mock()
+    zone.set_publish_callback(publish)
+    await entity.async_set_speed(speed)
+    assert publish.call_args.args[-1] == expected
+
+
+async def test_plain_pump_uses_activation_for_on_and_legacy_percentage(hass, controls):
+    entity = controls.entities["fan"]
+    zone = entity._current_zone()
+    zone.config.pop("speed")
+    controls.coordinator.async_update_listeners()
+    publish = Mock()
+    zone.set_publish_callback(publish)
+    await call(hass, controls, "fan", "turn_on", {})
+    await entity.async_set_percentage(25)
+    assert [c.args[-1] for c in publish.call_args_list] == [
+        {"active": True},
+        {"active": True},
+    ]
+
+
+async def test_missing_pump_reports_unavailable_without_reading_stale_speed(
+    hass, controls
+):
+    entity = controls.entities["fan"]
+    controls.coordinator._zones[ZoneType.FLOW_ZONE] = []
+    controls.coordinator.async_update_listeners()
+    assert entity.speed_count == 1
+    assert hass.states.get(entity.entity_id).state == "unavailable"
+
+
+async def test_light_black_reports_keep_hue_and_drop_color_on_capability_loss(
+    hass, controls
+):
+    entity = controls.entities["light"]
+    zone = entity._current_zone()
+    zone.update_from_state({"rgbi": [0, 0, 0, 1]})
+    controls.coordinator.async_update_listeners()
+    assert entity.brightness == 0
+    assert entity.rgb_color == (0, 255, 0)
+    zone.rgbi = None
+    controls.coordinator.async_update_listeners()
+    assert entity.rgb_color is None
+    assert entity.brightness is None
+    assert entity._get_zone_state() is zone
+    controls.coordinator._zones[ZoneType.LIGHTING_ZONE] = []
+    controls.coordinator.async_update_listeners()
+    assert hass.states.get(entity.entity_id).state == "unavailable"
+    assert entity.is_on is None
+
+
+async def test_effect_only_command_is_retained_after_plain_light_report(hass, controls):
+    entity = controls.entities["light"]
+    publish = Mock()
+    entity._current_zone().set_publish_callback(publish)
+    await entity.async_turn_on(effect="rainbow")
+    entity._current_zone().effect = None
+    controls.coordinator.async_update_listeners()
+    assert entity.effect_list == ["rainbow"]
+    assert publish.call_args.args[-1] == {"effect": "rainbow", "active": True}
+
+
+async def test_heat_mode_does_not_publish_and_empty_temperature_is_noop(controls):
+    entity = controls.entities["climate"]
+    publish = Mock()
+    entity._current_zone().set_publish_callback(publish)
+    await entity.async_set_hvac_mode("heat")
+    await entity.async_set_temperature()
+    publish.assert_not_called()

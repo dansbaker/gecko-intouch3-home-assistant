@@ -43,6 +43,8 @@ Explicit numeric pH/ORP readings in reported MQTT extensions are also discovered
 
 The cloud payload handling is covered by automated tests based on public fork examples. Live chemistry and account permissions still need verification on Waterlab hardware. Reports with redacted payloads and timestamps are very welcome.
 
+Entity names and icons now use Home Assistant translations, and connection/firmware details appear as diagnostics. Existing entity IDs and Watercare option strings are retained. Target-temperature mirrors no longer contribute measurement statistics. MQTT ORP extensions retain their values without assuming a voltage unit; explicit-unit Waterlab readings retain their physical units. See the [entity metadata review](docs/ENTITY_METADATA.md).
+
 ## Troubleshooting and contributions
 
 If data stops updating, check the spa in the Gecko app and inspect the gateway/vessel connection entities. A pump running for filtration or heating can remain on after a manual off request; the integration preserves automatic-demand protection. Two-speed pumps parked at high speed can start at low first and wait for a device report before requesting high.

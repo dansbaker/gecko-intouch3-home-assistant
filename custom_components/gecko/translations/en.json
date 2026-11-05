@@ -60,34 +60,130 @@
         "name": "Spa (CO) Serial Number"
       },
       "raw_api_data": {
-        "name": "Raw API Data"
+        "name": "Raw API Data",
+        "state": {
+          "captured": "Captured",
+          "empty": "Empty"
+        }
       },
+      "flow_status": {
+        "name": "{zone_name} Flow Status",
+        "state": {
+          "ok": "OK",
+          "flow_check": "Flow check in progress",
+          "other": "Other (see raw_code)"
+        }
+      },
+      "temperature_status": {
+        "name": "{zone_name} Status"
+      },
+      "speed_mode": {
+        "name": "{zone_name} Speed Mode",
+        "state": {
+          "off": "Off",
+          "low": "Low",
+          "medium": "Medium",
+          "high": "High",
+          "max": "Max"
+        }
+      },
+      "current_temperature": {
+        "name": "{zone_name} Current Temperature"
+      },
+      "target_temperature": {
+        "name": "{zone_name} Target Temperature"
+      },
+      "waterlab_ph": {
+        "name": "Waterlab pH"
+      },
+      "waterlab_orp": {
+        "name": "Waterlab ORP"
+      },
+      "waterlab_watertemp": {
+        "name": "Waterlab Water temperature"
+      },
+      "waterlab_alkalinity": {
+        "name": "Waterlab Alkalinity"
+      },
+      "waterlab_chlorine": {
+        "name": "Waterlab Chlorine"
+      },
+      "waterlab_bromine": {
+        "name": "Waterlab Bromine"
+      },
+      "waterlab_hardness": {
+        "name": "Waterlab Hardness"
+      },
+      "waterlab_cyanuricacid": {
+        "name": "Waterlab Cyanuric acid"
+      },
+      "waterlab_freechlorine": {
+        "name": "Waterlab Free chlorine"
+      },
+      "waterlab_totalchlorine": {
+        "name": "Waterlab Total chlorine"
+      },
+      "reported_ph": {
+        "name": "{metric_name}"
+      },
+      "reported_orp": {
+        "name": "{metric_name}"
+      },
+      "reported_metric": {
+        "name": "{metric_name}"
+      }
+    },
+    "select": {
+      "watercare_mode": {
+        "name": "Watercare Mode"
+      }
+    },
+    "climate": {
+      "thermostat": {
+        "name": "Thermostat {zone_id}"
+      }
+    },
+    "binary_sensor": {
       "gateway_status": {
         "name": "Gateway Status"
       },
       "vessel_status": {
         "name": "Spa Status"
       },
-      "flow_status": {
-        "name": "Flow Status",
-        "state": {
-          "ok": "OK",
-          "flow_check": "Flow check in progress",
-          "other": "Other (see raw_code)"
-        }
+      "transport_connection": {
+        "name": "Transport Connection"
+      },
+      "overall_connection": {
+        "name": "Overall Connection"
+      },
+      "spa_in_use": {
+        "name": "Spa In Use"
+      },
+      "heating": {
+        "name": "Heating"
+      },
+      "filtration": {
+        "name": "Filtration"
+      },
+      "flow_check": {
+        "name": "Flow Check"
+      },
+      "eco_mode": {
+        "name": "{zone_name} Eco Mode"
+      },
+      "zone_heating": {
+        "name": "{zone_name} Heating"
       }
     },
-    "select": {
-      "watercare_mode": {
-        "name": "Watercare Mode",
-        "state": {
-          "away": "Away",
-          "standard": "Standard",
-          "savings": "Savings",
-          "super_savings": "Super Savings",
-          "weekender": "Weekender",
-          "other": "Other"
-        }
+    "fan": {
+      "pump": {
+        "name": "{zone_name}"
+      },
+      "blower": {
+        "name": "{zone_name}"
+      },
+      "waterfall": {
+        "name": "{zone_name}"
       }
     }
   },

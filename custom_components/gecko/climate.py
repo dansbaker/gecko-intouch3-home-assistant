@@ -76,7 +76,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Gecko climate entities from a config entry."""
-    coordinators = config_entry.runtime_data.coordinators
+    runtime = getattr(config_entry, "runtime_data", None)
+    coordinators = runtime.coordinators if runtime else []
 
     # Track which zones have already been added for each coordinator
     added_zones: dict[str, set[int]] = {}
@@ -127,6 +128,7 @@ class GeckoClimate(
     """Representation of a Gecko climate control."""
 
     _attr_has_entity_name = True
+    _attr_translation_key = "thermostat"
     _zone_type = ZoneType.TEMPERATURE_CONTROL_ZONE
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = (
@@ -151,7 +153,7 @@ class GeckoClimate(
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))}
         )
-        self._attr_name = f"Thermostat {zone.id}"
+        self._attr_translation_placeholders = {"zone_id": str(zone.id)}
 
         # Set temperature limits
         self._attr_min_temp = self._zone.min_temperature_set_point_c

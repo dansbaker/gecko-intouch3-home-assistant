@@ -321,3 +321,25 @@ the config-flow coverage gate still passes. Overall statement/branch coverage is
 Config flow, select and diagnostics retain 100% statement and branch coverage.
 These results do not satisfy the complete integration-wide Silver coverage goal.
 No live spa action, push or publication was performed.
+
+
+## Entity coverage and metadata review completed (5 November 2026)
+
+The remaining pump/light coverage gaps and the entity metadata review are
+complete. [The audit](ENTITY_METADATA.md) records classes, units, names, icons,
+statistics, registry compatibility and the deliberate preservation of legacy
+state values. It also distinguishes these results from remaining Core submission
+and hardware validation work.
+
+**594 tests and 46 subtests pass.** Fan, light, climate, select, shared entity and
+diagnostics modules reach 100% statement and branch coverage. Sensor and binary
+sensor modules reach 99.3% statement coverage each and exceed 95% combined
+statement/branch coverage. CI now guards these targets in addition to the full
+config-flow gate. Overall statement/branch coverage is 77.8% / 68.8%; the whole
+integration has not yet met the Silver per-module coverage rule.
+
+The official HA 2026.9.4 hassfest translation/icon validators pass locally. Fixed
+names and icons now use catalogs, existing IDs remain stable, diagnostic categories
+are assigned, setpoints no longer generate measurement statistics, and chemistry
+units are no longer guessed. READY connectivity and unknown status handling are
+corrected. No live Home Assistant installation, push or publication was performed.

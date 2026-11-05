@@ -2,37 +2,35 @@
 
 from __future__ import annotations
 
-import logging
 import hashlib
+import logging
 import math
-from homeassistant.components.sensor import SensorStateClass
-from homeassistant.const import UnitOfTemperature
-from typing import Any
+from typing import Any, ClassVar
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util import slugify
 
-from .gecko_iot_client.models.flow_zone import FlowZone
-from .gecko_iot_client.models.temperature_control_zone import (
-    TemperatureControlZone,
-    TemperatureControlZoneStatus,
-)
-from .gecko_iot_client.models.zone_types import ZoneType
-
-from .gecko_iot_client.helpers.shadow_metrics import extract_extension_metrics, water_quality_kind, humanize_shadow_path, is_calibration_path, MAX_EXTENSION_METRICS
 from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
+from .gecko_iot_client.helpers.shadow_metrics import (
+    MAX_EXTENSION_METRICS,
+    extract_extension_metrics,
+    humanize_shadow_path,
+    is_calibration_path,
+    water_quality_kind,
+)
 from .gecko_iot_client.helpers.telemetry import (
     FLOW_SPEED_MODE_OPTIONS,
     derive_flow_speed_mode,
@@ -44,6 +42,12 @@ from .gecko_iot_client.helpers.telemetry import (
     get_temperature_flow_status,
     is_manual_flow_demand,
 )
+from .gecko_iot_client.models.flow_zone import FlowZone
+from .gecko_iot_client.models.temperature_control_zone import (
+    TemperatureControlZone,
+    TemperatureControlZoneStatus,
+)
+from .gecko_iot_client.models.zone_types import ZoneType
 
 # Explicit platform concurrency: read-only coordinator push updates.
 PARALLEL_UPDATES = 0
@@ -57,45 +61,31 @@ TEMPERATURE_STATUS_OPTIONS: tuple[str, ...] = tuple(
 DEVICE_TELEMETRY_SENSOR_DESCRIPTIONS: tuple[SensorEntityDescription, ...] = (
     SensorEntityDescription(
         key="rf_signal_strength",
-        name="RF Signal Strength",
         translation_key="rf_signal_strength",
-        icon="mdi:signal",
     ),
     SensorEntityDescription(
         key="rf_channel",
-        name="RF Channel",
         translation_key="rf_channel",
-        icon="mdi:radio-tower",
     ),
     SensorEntityDescription(
         key="pack_configuration",
-        name="Pack Configuration",
         translation_key="pack_configuration",
-        icon="mdi:package-variant-closed",
     ),
     SensorEntityDescription(
         key="home_firmware_version",
-        name="Home (EN) Firmware Version",
         translation_key="home_firmware_version",
-        icon="mdi:chip",
     ),
     SensorEntityDescription(
         key="home_serial_number",
-        name="Home (EN) Serial Number",
         translation_key="home_serial_number",
-        icon="mdi:identifier",
     ),
     SensorEntityDescription(
         key="spa_firmware_version",
-        name="Spa (CO) Firmware Version",
         translation_key="spa_firmware_version",
-        icon="mdi:chip",
     ),
     SensorEntityDescription(
         key="spa_serial_number",
-        name="Spa (CO) Serial Number",
         translation_key="spa_serial_number",
-        icon="mdi:identifier",
     ),
 )
 
@@ -106,7 +96,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Gecko sensor entities from a config entry."""
-    runtime_data = config_entry.runtime_data
+    runtime_data = getattr(config_entry, "runtime_data", None)
     if not runtime_data or not runtime_data.coordinators:
         _LOGGER.error(
             "No coordinators found in runtime_data for config entry %s",
@@ -178,7 +168,9 @@ async def async_setup_entry(
         def discover_waterlab(coord=coordinator, added=discovered_waterlab):
             keys = set(coord.waterlab_readings) - added
             if keys:
-                async_add_entities([GeckoWaterlabSensor(coord, key) for key in sorted(keys)])
+                async_add_entities(
+                    [GeckoWaterlabSensor(coord, key) for key in sorted(keys)]
+                )
                 added.update(keys)
 
         discover_waterlab()
@@ -208,6 +200,7 @@ class GeckoDeviceTelemetrySensor(
     """Expose RF and EN/CO metadata from the raw Gecko shadow."""
 
     _attr_has_entity_name = True
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(
         self,
@@ -219,9 +212,6 @@ class GeckoDeviceTelemetrySensor(
         self.entity_description = description
         self._attr_unique_id = (
             f"{coordinator.entry_id}_{coordinator.vessel_id}_{description.key}"
-        )
-        self._attr_suggested_object_id = slugify(
-            f"{coordinator.vessel_name}_{description.key}"
         )
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
@@ -265,8 +255,9 @@ class GeckoRawApiSensor(
     """Expose credential-redacted raw API payloads for opt-in debugging."""
 
     _attr_has_entity_name = True
-    _attr_name = "Raw API Data"
-    _attr_icon = "mdi:code-json"
+    _attr_translation_key = "raw_api_data"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = ("captured", "empty")
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_entity_registry_enabled_default = False
 
@@ -275,9 +266,6 @@ class GeckoRawApiSensor(
         super().__init__(coordinator)
         self._attr_unique_id = (
             f"{coordinator.entry_id}_{coordinator.vessel_id}_raw_api_data"
-        )
-        self._attr_suggested_object_id = slugify(
-            f"{coordinator.vessel_name}_raw_api_data"
         )
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
@@ -324,10 +312,9 @@ class GeckoTemperatureStatusSensor(
         """Initialize the temperature status sensor."""
         super().__init__(coordinator)
         self._zone = zone
-        self._attr_unique_id = (
-            f"{coordinator.entry_id}_{coordinator.vessel_id}_temperature_status_{zone.id}"
-        )
-        self._attr_name = f"{zone.name} Status"
+        self._attr_unique_id = f"{coordinator.entry_id}_{coordinator.vessel_id}_temperature_status_{zone.id}"
+        self._attr_translation_key = "temperature_status"
+        self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -369,11 +356,10 @@ class GeckoTemperatureFlowStatusSensor(
 
     _zone_type = ZoneType.TEMPERATURE_CONTROL_ZONE
     _attr_has_entity_name = True
-    _attr_icon = "mdi:waves-arrow-right"
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = ["ok", "flow_check", "other"]
+    _attr_options = ("ok", "flow_check", "other")
     _attr_translation_key = "flow_status"
-    _CODE_TO_STATE = {"OK": "ok", "IP": "flow_check"}
+    _CODE_TO_STATE: ClassVar[dict[str, str]] = {"OK": "ok", "IP": "flow_check"}
 
     def __init__(
         self,
@@ -386,10 +372,7 @@ class GeckoTemperatureFlowStatusSensor(
         self._attr_unique_id = (
             f"{coordinator.entry_id}_{coordinator.vessel_id}_flow_status_{zone.id}"
         )
-        self._attr_name = f"{zone.name} Flow Status"
-        self._attr_suggested_object_id = slugify(
-            f"{coordinator.vessel_name}_{zone.name}_flow_status"
-        )
+        self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -405,7 +388,11 @@ class GeckoTemperatureFlowStatusSensor(
             self.coordinator.get_spa_state(),
         )
         self._raw_code = raw_code
-        self._attr_native_value = None if raw_code is None else self._CODE_TO_STATE.get(str(raw_code).strip().upper(), "other")
+        self._attr_native_value = (
+            None
+            if raw_code is None
+            else self._CODE_TO_STATE.get(str(raw_code).strip().upper(), "other")
+        )
 
     @property
     def extra_state_attributes(self) -> dict[str, str]:
@@ -417,7 +404,7 @@ class GeckoTemperatureFlowStatusSensor(
             "source_field": (
                 "MQTT shadow: state.reported.zones.temperatureControl."
                 f"{self._zone.id}.flo_"
-            )
+            ),
         }
 
     @callback
@@ -451,7 +438,8 @@ class GeckoFlowSpeedModeSensor(
         self._attr_unique_id = (
             f"{coordinator.entry_id}_{coordinator.vessel_id}_flow_speed_mode_{zone.id}"
         )
-        self._attr_name = f"{zone.name} Speed Mode"
+        self._attr_translation_key = "speed_mode"
+        self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -500,7 +488,9 @@ class GeckoFlowSpeedModeSensor(
         self.async_write_ha_state()
 
 
-class GeckoSpaTemperatureSensor(GeckoZoneEntityMixin, GeckoEntityAvailabilityMixin, CoordinatorEntity, SensorEntity):
+class GeckoSpaTemperatureSensor(
+    GeckoZoneEntityMixin, GeckoEntityAvailabilityMixin, CoordinatorEntity, SensorEntity
+):
     """Numeric temperature mirrors adapted from @markus-lassfolk's fork."""
 
     _zone_type = ZoneType.TEMPERATURE_CONTROL_ZONE
@@ -514,15 +504,33 @@ class GeckoSpaTemperatureSensor(GeckoZoneEntityMixin, GeckoEntityAvailabilityMix
         super().__init__(coordinator)
         self._zone = zone
         self._kind = kind
-        self._attr_name = f"{zone.name} {kind.title()} Temperature"
+        self._attr_translation_key = f"{kind}_temperature"
+        self._attr_translation_placeholders = {"zone_name": zone.name}
+        self._attr_state_class = (
+            SensorStateClass.MEASUREMENT if kind == "current" else None
+        )
         self._attr_unique_id = f"{coordinator.entry_id}_{coordinator.vessel_id}_spa_{kind}_temperature_{zone.id}"
-        self._attr_device_info = dr.DeviceInfo(identifiers={(DOMAIN, str(coordinator.vessel_id))})
+        self._attr_device_info = dr.DeviceInfo(
+            identifiers={(DOMAIN, str(coordinator.vessel_id))}
+        )
         self._update_value()
 
     def _update_value(self):
         zone = self._current_zone()
-        value = None if zone is None else (zone.temperature if self._kind == "current" else zone.target_temperature)
-        self._attr_native_value = value if isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) else None
+        value = (
+            None
+            if zone is None
+            else (
+                zone.temperature if self._kind == "current" else zone.target_temperature
+            )
+        )
+        self._attr_native_value = (
+            value
+            if isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(value)
+            else None
+        )
 
     @callback
     def _handle_coordinator_update(self):
@@ -530,7 +538,9 @@ class GeckoSpaTemperatureSensor(GeckoZoneEntityMixin, GeckoEntityAvailabilityMix
         self.async_write_ha_state()
 
 
-class GeckoShadowMetricSensor(GeckoEntityAvailabilityMixin, CoordinatorEntity, SensorEntity):
+class GeckoShadowMetricSensor(
+    GeckoEntityAvailabilityMixin, CoordinatorEntity, SensorEntity
+):
     """A read-only reported extension metric, including available Waterlab data."""
 
     _attr_has_entity_name = True
@@ -539,29 +549,42 @@ class GeckoShadowMetricSensor(GeckoEntityAvailabilityMixin, CoordinatorEntity, S
         super().__init__(coordinator)
         self._path = path
         self._kind = water_quality_kind(path)
-        self._attr_name = humanize_shadow_path(path)
+        self._attr_translation_key = f"reported_{self._kind or 'metric'}"
+        self._attr_translation_placeholders = {
+            "metric_name": humanize_shadow_path(path)
+        }
         digest = hashlib.sha256(path.encode()).hexdigest()[:16]
-        self._attr_unique_id = f"{coordinator.entry_id}_{coordinator.vessel_id}_extension_{digest}"
-        self._attr_device_info = dr.DeviceInfo(identifiers={(DOMAIN, str(coordinator.vessel_id))})
+        self._attr_unique_id = (
+            f"{coordinator.entry_id}_{coordinator.vessel_id}_extension_{digest}"
+        )
+        self._attr_device_info = dr.DeviceInfo(
+            identifiers={(DOMAIN, str(coordinator.vessel_id))}
+        )
         self._attr_entity_registry_enabled_default = self._kind is not None
         self._attr_entity_category = None if self._kind else EntityCategory.DIAGNOSTIC
-        self._attr_icon = "mdi:water-opacity" if self._kind else "mdi:flask-outline"
         if self._kind == "ph":
             self._attr_device_class = SensorDeviceClass.PH
             self._attr_state_class = SensorStateClass.MEASUREMENT
-        elif self._kind == "orp":
-            self._attr_device_class = SensorDeviceClass.VOLTAGE
-            self._attr_native_unit_of_measurement = "mV"
-            self._attr_state_class = SensorStateClass.MEASUREMENT
+        # Flattened MQTT extensions do not establish an ORP unit. Keep the
+        # value readable without inventing voltage units or statistics.
         self._update_value()
 
     def _update_value(self):
-        value = extract_extension_metrics(self.coordinator.get_spa_state()).get(self._path)
-        self._attr_native_value = None if self._kind == "ph" and value is not None and not 0 <= value <= 14 else value
+        value = extract_extension_metrics(self.coordinator.get_spa_state()).get(
+            self._path
+        )
+        self._attr_native_value = (
+            None
+            if self._kind == "ph" and value is not None and not 0 <= value <= 14
+            else value
+        )
 
     @property
     def extra_state_attributes(self):
-        return {"source_path":self._path,"calibration_parameter":is_calibration_path(self._path)}
+        return {
+            "source_path": self._path,
+            "calibration_parameter": is_calibration_path(self._path),
+        }
 
     @callback
     def _handle_coordinator_update(self):
@@ -577,25 +600,55 @@ class GeckoWaterlabSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, key):
         super().__init__(coordinator)
         self._key = key
-        record = coordinator.waterlab_readings[key]
-        self._attr_unique_id = f"{coordinator.entry_id}_{coordinator.vessel_id}_waterlab_{key}"
-        self._attr_name = f"Waterlab {record.get('title', key)}"
-        self._attr_device_info = dr.DeviceInfo(identifiers={(DOMAIN, str(coordinator.vessel_id))})
-        self._attr_icon = "mdi:water-opacity"
-        if key == "ph":
+        self._attr_unique_id = (
+            f"{coordinator.entry_id}_{coordinator.vessel_id}_waterlab_{key}"
+        )
+        self._attr_translation_key = f"waterlab_{key.lower()}"
+        self._attr_device_info = dr.DeviceInfo(
+            identifiers={(DOMAIN, str(coordinator.vessel_id))}
+        )
+        self._update_metadata()
+
+    def _update_metadata(self):
+        record = self.coordinator.waterlab_readings.get(self._key, {})
+        unit = record.get("unit")
+        self._attr_device_class = None
+        self._attr_native_unit_of_measurement = unit
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        if self._key == "ph":
             self._attr_device_class = SensorDeviceClass.PH
-        elif key == "orp" and record.get("unit", "mV") == "mV":
+            self._attr_native_unit_of_measurement = None
+        elif self._key == "orp" and unit in ("mV", "V"):
             self._attr_device_class = SensorDeviceClass.VOLTAGE
-            self._attr_native_unit_of_measurement = "mV"
-        elif key == "waterTemp" and record.get("unit") in ("°C", "C", "celsius"):
+        elif self._key == "waterTemp" and unit in (
+            "°C",
+            "C",
+            "celsius",
+            "°F",
+            "F",
+            "fahrenheit",
+        ):
             self._attr_device_class = SensorDeviceClass.TEMPERATURE
-            self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
-        elif key != "ph":
-            self._attr_native_unit_of_measurement = record.get("unit")
+            self._attr_native_unit_of_measurement = (
+                UnitOfTemperature.CELSIUS
+                if unit in ("°C", "C", "celsius")
+                else UnitOfTemperature.FAHRENHEIT
+            )
+        elif self._key in ("orp", "waterTemp"):
+            # A missing/unknown unit cannot establish a physical measurement.
+            self._attr_state_class = None
+
+    @callback
+    def _handle_coordinator_update(self):
+        self._update_metadata()
+        self.async_write_ha_state()
 
     @property
     def available(self):
-        return self.coordinator.waterlab_available and self._key in self.coordinator.waterlab_readings
+        return (
+            self.coordinator.waterlab_available
+            and self._key in self.coordinator.waterlab_readings
+        )
 
     @property
     def native_value(self):
@@ -604,4 +657,8 @@ class GeckoWaterlabSensor(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         record = self.coordinator.waterlab_readings.get(self._key, {})
-        return {**{key: value for key, value in record.items() if key != "value"}, "last_successful_poll": self.coordinator.waterlab_last_success, "data_source": "Gecko cloud Waterlab"}
+        return {
+            **{key: value for key, value in record.items() if key != "value"},
+            "last_successful_poll": self.coordinator.waterlab_last_success,
+            "data_source": "Gecko cloud Waterlab",
+        }

@@ -32,7 +32,7 @@ async def async_setup_entry(
     """Set up Gecko light entities from a config entry."""
 
     # Get runtime data with per-vessel coordinators
-    runtime_data = config_entry.runtime_data
+    runtime_data = getattr(config_entry, "runtime_data", None)
     if not runtime_data or not runtime_data.coordinators:
         _LOGGER.error(
             "No coordinators found in runtime_data for config entry %s",

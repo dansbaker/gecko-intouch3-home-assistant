@@ -6,24 +6,21 @@ import logging
 from typing import Any
 
 from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
-    BinarySensorDeviceClass,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .gecko_iot_client.models.flow_zone import FlowZone
-from .gecko_iot_client.models.temperature_control_zone import TemperatureControlZone
-from .gecko_iot_client.models.zone_types import ZoneType
-
+from . import GeckoConfigEntry
+from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
 from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
-from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
-from . import GeckoConfigEntry
 from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
 from .gecko_iot_client.helpers.telemetry import (
     get_flow_initiators,
@@ -33,6 +30,9 @@ from .gecko_iot_client.helpers.telemetry import (
     is_filtration_flow_active,
     is_manual_flow_demand,
 )
+from .gecko_iot_client.models.flow_zone import FlowZone
+from .gecko_iot_client.models.temperature_control_zone import TemperatureControlZone
+from .gecko_iot_client.models.zone_types import ZoneType
 
 # Explicit platform concurrency: read-only coordinator push updates.
 PARALLEL_UPDATES = 0
@@ -42,26 +42,26 @@ _LOGGER = logging.getLogger(__name__)
 BINARY_SENSOR_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
     BinarySensorEntityDescription(
         key="gateway_status",
-        name="Gateway Status",
-        icon="mdi:router-wireless",
+        translation_key="gateway_status",
+        entity_category=EntityCategory.DIAGNOSTIC,
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
     BinarySensorEntityDescription(
         key="vessel_status",
-        name="Spa Status", 
-        icon="mdi:hot-tub",
-        device_class=BinarySensorDeviceClass.RUNNING,
+        translation_key="vessel_status",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
     BinarySensorEntityDescription(
         key="transport_connection",
-        name="Transport Connection",
-        icon="mdi:cloud-check",
+        translation_key="transport_connection",
+        entity_category=EntityCategory.DIAGNOSTIC,
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
     BinarySensorEntityDescription(
         key="overall_connection",
-        name="Overall Connection",
-        icon="mdi:connection",
+        translation_key="overall_connection",
+        entity_category=EntityCategory.DIAGNOSTIC,
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
     ),
 )
@@ -73,8 +73,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Gecko binary sensor entities from a config entry."""
-    
-    coordinators = config_entry.runtime_data.coordinators
+
+    runtime = getattr(config_entry, "runtime_data", None)
+    coordinators = runtime.coordinators if runtime else []
     if not coordinators:
         _LOGGER.warning("No vessel coordinators found")
         return
@@ -102,7 +103,9 @@ async def async_setup_entry(
                 added_eco_zone_ids[vessel_key].add(zone_id)
 
             if zone_id not in added_heating_zone_ids[vessel_key]:
-                new_entities.append(GeckoTemperatureHeatingBinarySensor(coordinator, zone))
+                new_entities.append(
+                    GeckoTemperatureHeatingBinarySensor(coordinator, zone)
+                )
                 added_heating_zone_ids[vessel_key].add(zone_id)
 
         if new_entities:
@@ -118,7 +121,11 @@ async def async_setup_entry(
                 description=description,
             )
             entities.append(entity)
-            _LOGGER.debug("Created binary sensor entity %s for %s", description.key, coordinator.vessel_name)
+            _LOGGER.debug(
+                "Created binary sensor entity %s for %s",
+                description.key,
+                coordinator.vessel_name,
+            )
         entities.append(
             GeckoSpaInUseBinarySensor(
                 coordinator=coordinator,
@@ -147,7 +154,7 @@ async def async_setup_entry(
         coordinator.register_zone_update_callback(
             lambda coord=coordinator: discover_new_binary_sensor_entities(coord)
         )
-    
+
     if entities:
         _LOGGER.debug("Adding %d binary sensor entities", len(entities))
         async_add_entities(entities)
@@ -155,7 +162,9 @@ async def async_setup_entry(
         _LOGGER.debug("No binary sensor entities created")
 
 
-class GeckoBinarySensorEntity(CoordinatorEntity[GeckoVesselCoordinator], BinarySensorEntity):
+class GeckoBinarySensorEntity(
+    CoordinatorEntity[GeckoVesselCoordinator], BinarySensorEntity
+):
     """Representation of a Gecko binary sensor."""
 
     _attr_has_entity_name = True
@@ -170,13 +179,15 @@ class GeckoBinarySensorEntity(CoordinatorEntity[GeckoVesselCoordinator], BinaryS
         super().__init__(coordinator)
 
         self.entity_description = description
-        self._attr_is_on = False
+        self._attr_is_on = None
         self._monitor_id = coordinator.monitor_id
         self._vessel_name = coordinator.vessel_name
         self._vessel_id = coordinator.vessel_id
 
         # Set up entity attributes — has_entity_name=True means HA prepends device name
-        self._attr_unique_id = f"{config_entry.entry_id}_{coordinator.vessel_id}_{description.key}"
+        self._attr_unique_id = (
+            f"{config_entry.entry_id}_{coordinator.vessel_id}_{description.key}"
+        )
 
         # Device info for grouping entities
         self._attr_device_info = dr.DeviceInfo(
@@ -186,10 +197,14 @@ class GeckoBinarySensorEntity(CoordinatorEntity[GeckoVesselCoordinator], BinaryS
     async def async_added_to_hass(self) -> None:
         """Called when entity is added to hass."""
         await super().async_added_to_hass()
-        
+
         # Update state immediately when added to hass
         self._update_state()
-        _LOGGER.debug("Binary sensor %s added to hass with initial state: %s", self.entity_description.key, self._attr_is_on)
+        _LOGGER.debug(
+            "Binary sensor %s added to hass with initial state: %s",
+            self.entity_description.key,
+            self._attr_is_on,
+        )
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -202,28 +217,34 @@ class GeckoBinarySensorEntity(CoordinatorEntity[GeckoVesselCoordinator], BinaryS
         # Access connectivity status through connection manager
         try:
             connection_manager = self.hass.data.get(GECKO_CONNECTION_MANAGER_KEY)
-            
+
             connectivity_status = None
             if connection_manager:
                 connection = connection_manager.get_connection(self._monitor_id)
                 if connection:
                     # Get connectivity status from connection (updated by gecko client callbacks)
                     connectivity_status = connection.connectivity_status
-                    
+
                     # Fallback to gecko client if connection status not yet updated
                     if not connectivity_status and connection.gecko_client:
-                        connectivity_status = connection.gecko_client.connectivity_status
-            
+                        connectivity_status = (
+                            connection.gecko_client.connectivity_status
+                        )
+
             if not connectivity_status:
-                self._attr_is_on = False
+                self._attr_is_on = None
                 return
-            
+
             # Update connectivity binary sensor state
             self._update_connectivity_from_status(connectivity_status)
-                
-        except Exception as e:
-            _LOGGER.debug("Error updating connectivity binary sensor state for %s: %s", self.entity_description.key, e)
-            self._attr_is_on = False
+
+        except (AttributeError, TypeError, ValueError) as e:
+            _LOGGER.debug(
+                "Error updating connectivity binary sensor state for %s: %s",
+                self.entity_description.key,
+                e,
+            )
+            self._attr_is_on = None
 
     def _update_connectivity_from_status(self, connectivity_status) -> None:
         """Update connectivity binary sensor state from connectivity status object."""
@@ -231,24 +252,35 @@ class GeckoBinarySensorEntity(CoordinatorEntity[GeckoVesselCoordinator], BinaryS
             if self.entity_description.key == "gateway_status":
                 # Gateway status is "connected" when connected
                 status = str(connectivity_status.gateway_status).lower()
-                self._attr_is_on = status == "connected"
-                
+                self._attr_is_on = {"connected": True, "disconnected": False}.get(
+                    status
+                )
+
             elif self.entity_description.key == "vessel_status":
                 # Vessel status is "running" when running
                 status = str(connectivity_status.vessel_status).lower()
-                self._attr_is_on = status == "running"
-                
+                self._attr_is_on = {
+                    "running": True,
+                    "ready": True,
+                    "offline": False,
+                    "disconnected": False,
+                }.get(status)
+
             elif self.entity_description.key == "transport_connection":
                 # Transport connection is a boolean
                 self._attr_is_on = bool(connectivity_status.transport_connected)
-                
+
             elif self.entity_description.key == "overall_connection":
                 # Overall connection is fully connected or not
                 self._attr_is_on = bool(connectivity_status.is_fully_connected)
-                
-        except Exception as e:
-            _LOGGER.warning("Error updating connectivity binary sensor %s: %s", self.entity_description.key, e)
-            self._attr_is_on = False
+
+        except (AttributeError, TypeError, ValueError) as e:
+            _LOGGER.warning(
+                "Error updating connectivity binary sensor %s: %s",
+                self.entity_description.key,
+                e,
+            )
+            self._attr_is_on = None
 
 
 class GeckoSpaInUseBinarySensor(
@@ -258,6 +290,9 @@ class GeckoSpaInUseBinarySensor(
 ):
     """Binary sensor for derived spa-in-use state."""
 
+    _attr_has_entity_name = True
+    _attr_translation_key = "spa_in_use"
+
     def __init__(
         self,
         coordinator: GeckoVesselCoordinator,
@@ -265,13 +300,14 @@ class GeckoSpaInUseBinarySensor(
     ) -> None:
         """Initialize the spa-in-use binary sensor."""
         super().__init__(coordinator)
-        vessel_id_name = coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        self._attr_name = f"{coordinator.vessel_name} Spa In Use"
+        vessel_id_name = (
+            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
+        )
+
         self._attr_unique_id = (
             f"{config_entry.entry_id}_{coordinator.vessel_id}_spa_in_use"
         )
         self.entity_id = f"binary_sensor.{vessel_id_name}_spa_in_use"
-        self._attr_icon = "mdi:hot-tub"
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -367,13 +403,15 @@ class GeckoEcoModeBinarySensor(
         """Initialize the eco mode binary sensor."""
         super().__init__(coordinator)
         self._zone = zone
-        vessel_id_name = coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        self._attr_name = f"{zone.name} Eco Mode"
+        vessel_id_name = (
+            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
+        )
+        self._attr_translation_key = "eco_mode"
+        self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_unique_id = (
             f"{coordinator.entry_id}_{coordinator.vessel_id}_eco_mode_{zone.id}"
         )
         self.entity_id = f"binary_sensor.{vessel_id_name}_eco_mode_{zone.id}"
-        self._attr_icon = "mdi:leaf"
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -426,13 +464,15 @@ class GeckoTemperatureHeatingBinarySensor(
         """Initialize the per-zone heating binary sensor."""
         super().__init__(coordinator)
         self._zone = zone
-        vessel_id_name = coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        self._attr_name = f"{zone.name} Heating"
+        vessel_id_name = (
+            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
+        )
+        self._attr_translation_key = "zone_heating"
+        self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_unique_id = (
             f"{coordinator.entry_id}_{coordinator.vessel_id}_heating_{zone.id}"
         )
         self.entity_id = f"binary_sensor.{vessel_id_name}_heating_{zone.id}"
-        self._attr_icon = "mdi:fire"
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -472,6 +512,8 @@ class GeckoVesselHeatingBinarySensor(
     """Binary sensor for vessel-level aggregate heating state."""
 
     _attr_device_class = BinarySensorDeviceClass.HEAT
+    _attr_has_entity_name = True
+    _attr_translation_key = "heating"
 
     def __init__(
         self,
@@ -480,13 +522,14 @@ class GeckoVesselHeatingBinarySensor(
     ) -> None:
         """Initialize the vessel heating binary sensor."""
         super().__init__(coordinator)
-        vessel_id_name = coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        self._attr_name = f"{coordinator.vessel_name} Heating"
+        vessel_id_name = (
+            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
+        )
+
         self._attr_unique_id = (
             f"{config_entry.entry_id}_{coordinator.vessel_id}_heating"
         )
         self.entity_id = f"binary_sensor.{vessel_id_name}_heating"
-        self._attr_icon = "mdi:fire"
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -533,9 +576,9 @@ class GeckoAutomaticFlowBinarySensor(
 ):
     """Base sensor for vessel-level automatic flow initiators."""
 
+    _attr_has_entity_name = True
+
     _activity_key: str
-    _activity_name: str
-    _activity_icon: str
 
     def __init__(
         self,
@@ -544,13 +587,14 @@ class GeckoAutomaticFlowBinarySensor(
     ) -> None:
         """Initialize an automatic flow binary sensor."""
         super().__init__(coordinator)
-        vessel_id_name = coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        self._attr_name = f"{coordinator.vessel_name} {self._activity_name}"
+        vessel_id_name = (
+            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
+        )
+        self._attr_translation_key = self._activity_key
         self._attr_unique_id = (
             f"{config_entry.entry_id}_{coordinator.vessel_id}_{self._activity_key}"
         )
         self.entity_id = f"binary_sensor.{vessel_id_name}_{self._activity_key}"
-        self._attr_icon = self._activity_icon
         self._attr_device_info = dr.DeviceInfo(
             identifiers={(DOMAIN, str(coordinator.vessel_id))},
         )
@@ -579,9 +623,7 @@ class GeckoAutomaticFlowBinarySensor(
             if is_filtration_flow_active(zone, spa_state)
         ]
         self._checkflow_zone_ids = [
-            str(zone.id)
-            for zone in flow_zones
-            if is_checkflow_active(zone, spa_state)
+            str(zone.id) for zone in flow_zones if is_checkflow_active(zone, spa_state)
         ]
         self._flow_initiators_by_zone_id = {
             str(zone.id): sorted(get_flow_initiators(zone, spa_state))
@@ -615,13 +657,9 @@ class GeckoFiltrationBinarySensor(GeckoAutomaticFlowBinarySensor):
     """Binary sensor for vessel-level automatic filtration state."""
 
     _activity_key = "filtration"
-    _activity_name = "Filtration"
-    _activity_icon = "mdi:filter"
 
 
 class GeckoFlowCheckBinarySensor(GeckoAutomaticFlowBinarySensor):
     """Binary sensor for vessel-level automatic check-flow state."""
 
     _activity_key = "flow_check"
-    _activity_name = "Flow Check"
-    _activity_icon = "mdi:water-sync"

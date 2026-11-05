@@ -45,7 +45,6 @@ class GeckoWatercareSelectEntity(
 
     _attr_has_entity_name = True
     _attr_translation_key = "watercare_mode"
-    _attr_icon = "mdi:hot-tub"
     _attr_entity_category = EntityCategory.CONFIG
     _attr_options = WATERCARE_SELECTABLE_MODES
 
