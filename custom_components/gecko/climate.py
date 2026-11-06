@@ -119,6 +119,11 @@ async def async_setup_entry(
         )
 
 
+# Home Assistant 2026.11 moved climate temperatures to the native_* API. The old
+# names still work there with a deprecation warning, until 2027.11.
+_NATIVE_TEMPERATURE_API = hasattr(ClimateEntity, "native_current_temperature")
+
+
 class GeckoClimate(
     GeckoZoneEntityMixin,
     GeckoEntityAvailabilityMixin,
@@ -130,7 +135,10 @@ class GeckoClimate(
     _attr_has_entity_name = True
     _attr_translation_key = "thermostat"
     _zone_type = ZoneType.TEMPERATURE_CONTROL_ZONE
-    _attr_temperature_unit = UnitOfTemperature.CELSIUS
+    if _NATIVE_TEMPERATURE_API:
+        _attr_native_temperature_unit = UnitOfTemperature.CELSIUS
+    else:
+        _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.PRESET_MODE
     )
@@ -189,16 +197,20 @@ class GeckoClimate(
             "heat_pump_error": status == TemperatureControlZoneStatus.HEAT_PUMP_ERROR,
         }
 
-        self._attr_current_temperature = zone.temperature
-        self._attr_target_temperature = zone.target_temperature
+        if _NATIVE_TEMPERATURE_API:
+            self._attr_native_current_temperature = zone.temperature
+            self._attr_native_target_temperature = zone.target_temperature
+        else:
+            self._attr_current_temperature = zone.temperature
+            self._attr_target_temperature = zone.target_temperature
         self._attr_max_temp = zone.max_temperature_set_point_c
         self._attr_min_temp = zone.min_temperature_set_point_c
 
         _LOGGER.debug(
             "Zone %s: current=%s°C, target=%s°C",
             zone.id,
-            self._attr_current_temperature,
-            self._attr_target_temperature,
+            zone.temperature,
+            zone.target_temperature,
         )
 
     async def async_added_to_hass(self) -> None:

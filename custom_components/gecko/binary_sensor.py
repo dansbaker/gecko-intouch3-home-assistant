@@ -16,6 +16,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import slugify
 
 from . import GeckoConfigEntry
 from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
@@ -38,6 +39,17 @@ from .gecko_iot_client.models.zone_types import ZoneType
 PARALLEL_UPDATES = 0
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _vessel_object_id(coordinator: GeckoVesselCoordinator) -> str:
+    """Return the vessel part of a suggested entity ID.
+
+    slugify trims and collapses whitespace and punctuation, so a vessel named
+    "Downstairs " no longer yields an invalid ID like "downstairs__heating".
+    """
+    name = (coordinator.vessel_name or "").strip()
+    return slugify(name) if name else slugify(str(coordinator.vessel_id))
+
 
 BINARY_SENSOR_DESCRIPTIONS: tuple[BinarySensorEntityDescription, ...] = (
     BinarySensorEntityDescription(
@@ -300,9 +312,7 @@ class GeckoSpaInUseBinarySensor(
     ) -> None:
         """Initialize the spa-in-use binary sensor."""
         super().__init__(coordinator)
-        vessel_id_name = (
-            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        )
+        vessel_id_name = _vessel_object_id(coordinator)
 
         self._attr_unique_id = (
             f"{config_entry.entry_id}_{coordinator.vessel_id}_spa_in_use"
@@ -403,9 +413,7 @@ class GeckoEcoModeBinarySensor(
         """Initialize the eco mode binary sensor."""
         super().__init__(coordinator)
         self._zone = zone
-        vessel_id_name = (
-            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        )
+        vessel_id_name = _vessel_object_id(coordinator)
         self._attr_translation_key = "eco_mode"
         self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_unique_id = (
@@ -464,9 +472,7 @@ class GeckoTemperatureHeatingBinarySensor(
         """Initialize the per-zone heating binary sensor."""
         super().__init__(coordinator)
         self._zone = zone
-        vessel_id_name = (
-            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        )
+        vessel_id_name = _vessel_object_id(coordinator)
         self._attr_translation_key = "zone_heating"
         self._attr_translation_placeholders = {"zone_name": zone.name}
         self._attr_unique_id = (
@@ -522,9 +528,7 @@ class GeckoVesselHeatingBinarySensor(
     ) -> None:
         """Initialize the vessel heating binary sensor."""
         super().__init__(coordinator)
-        vessel_id_name = (
-            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        )
+        vessel_id_name = _vessel_object_id(coordinator)
 
         self._attr_unique_id = (
             f"{config_entry.entry_id}_{coordinator.vessel_id}_heating"
@@ -587,9 +591,7 @@ class GeckoAutomaticFlowBinarySensor(
     ) -> None:
         """Initialize an automatic flow binary sensor."""
         super().__init__(coordinator)
-        vessel_id_name = (
-            coordinator.vessel_name.lower().replace(" ", "_").replace("-", "_")
-        )
+        vessel_id_name = _vessel_object_id(coordinator)
         self._attr_translation_key = self._activity_key
         self._attr_unique_id = (
             f"{config_entry.entry_id}_{coordinator.vessel_id}_{self._activity_key}"
