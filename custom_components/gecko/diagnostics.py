@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from . import GeckoConfigEntry
 from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
 from .gecko_iot_client.models.zone_types import ZoneType
+from .gecko_iot_client.helpers.waterlab import reading_diagnostics
 
 
 def _connection_diagnostics(connection) -> dict[str, Any]:
@@ -54,6 +55,7 @@ async def async_get_config_entry_diagnostics(
                     "available": coordinator.waterlab_available,
                     "polling_disabled": coordinator._waterlab_poll_disabled,
                     "reading_count": len(coordinator.waterlab_readings),
+                    "readings": reading_diagnostics(coordinator.waterlab_readings),
                 },
             }
         )

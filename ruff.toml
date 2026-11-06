@@ -1,0 +1,4 @@
+# Start with correctness checks across inherited and new code; expand separately.
+target-version = "py314"
+[lint]
+select = ["E9", "F63", "F7", "F82"]

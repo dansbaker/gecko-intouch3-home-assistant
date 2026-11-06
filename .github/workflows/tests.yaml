@@ -26,3 +26,9 @@ jobs:
         run: python script/check_config_flow_coverage.py coverage.json
       - name: Enforce completed entity coverage targets
         run: python script/check_entity_coverage.py coverage.json
+      - name: Enforce integration coverage baseline
+        run: python script/check_integration_coverage.py coverage.json
+      - name: Install lint tool
+        run: pip install -r requirements_lint.txt
+      - name: Check Python correctness
+        run: ruff check .

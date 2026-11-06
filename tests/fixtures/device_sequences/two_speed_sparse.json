@@ -1,0 +1,95 @@
+{
+  "provenance": {
+    "evidence": "synthetic regression",
+    "description": "Two-speed pump sparse state and configuration replacement; not a hardware capture"
+  },
+  "events": [
+    {
+      "configuration": {
+        "flow": {
+          "1": {
+            "name": "Pump",
+            "speed": {
+              "minimum": 50,
+              "maximum": 100,
+              "stepIncrement": 50
+            }
+          }
+        }
+      }
+    },
+    {
+      "reported": {
+        "flow": {
+          "1": {
+            "active": true,
+            "speed": 50
+          }
+        }
+      },
+      "expected": {
+        "active": true,
+        "speed": 50,
+        "maximum": 100
+      }
+    },
+    {
+      "reported": {
+        "flow": {
+          "1": {
+            "speed": 100
+          }
+        }
+      },
+      "expected": {
+        "active": true,
+        "speed": 100,
+        "maximum": 100
+      }
+    },
+    {
+      "reported": {
+        "flow": {
+          "1": {
+            "active": false,
+            "speed": 0
+          }
+        }
+      },
+      "expected": {
+        "active": false,
+        "speed": 0,
+        "maximum": 100
+      }
+    },
+    {
+      "configuration": {
+        "flow": {
+          "1": {
+            "name": "Pump",
+            "speed": {
+              "minimum": 25,
+              "maximum": 75,
+              "stepIncrement": 25
+            }
+          }
+        }
+      }
+    },
+    {
+      "reported": {
+        "flow": {
+          "1": {
+            "active": true,
+            "speed": 75
+          }
+        }
+      },
+      "expected": {
+        "active": true,
+        "speed": 75,
+        "maximum": 75
+      }
+    }
+  ]
+}

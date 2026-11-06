@@ -90,7 +90,17 @@ def main() -> None:
         redact_raw_api_payload,
         reports_binary_near_max_speed_encoding,
     )
-    from gecko_iot_client.helpers.waterlab import extract_readings
+    from gecko_iot_client.helpers.waterlab import (
+        extract_readings,
+        measurement_freshness,
+        reading_diagnostics,
+    )
+
+    assert measurement_freshness({}) == {"measurement_time_status": "unknown"}
+    assert (
+        reading_diagnostics({"ph": {"source": "PRIVATE"}})[0]["source"]
+        == "unrecognized"
+    )
 
     assert (
         extract_readings(

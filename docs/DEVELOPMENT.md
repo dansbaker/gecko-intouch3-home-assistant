@@ -92,3 +92,40 @@ are never moved or overwritten. A failed check prevents publication.
 `workflow_dispatch` can retry publication of the version currently on `master`;
 it does not bypass the checks. Branch pushes and pull requests do not publish.
 Integration releases do not publish the separately versioned client to PyPI.
+
+## Community evidence and compatibility checks
+
+Use [DEVICE_FIXTURES.md](DEVICE_FIXTURES.md) for sanitised protocol sequences and
+[COMPATIBILITY.md](COMPATIBILITY.md) for owner verification. Synthetic fixtures
+must remain labelled as such. Follow [RELEASE_TESTING.md](RELEASE_TESTING.md) for
+physical checks and rollback, and [QUALITY_CHECKLIST.md](QUALITY_CHECKLIST.md)
+for Core rule evidence.
+
+After the existing coverage commands, run:
+
+```sh
+python script/check_entity_coverage.py coverage.json
+python script/check_integration_coverage.py coverage.json
+pip install -r requirements_lint.txt
+ruff check .
+```
+
+The non-entity gate measures statement and branch floors separately, including
+setup, coordinator and connection management. These are regression baselines,
+not a claim of >95% coverage. New top-level HA modules must be assigned a target.
+Ruff currently checks syntax/name errors across the repository; expand style
+rules separately from inherited-code cleanups.
+
+Weekly scheduled and manual compatibility CI resolves the latest stable HA and
+custom-integration test harness, runs the full suite, and uploads resolved package
+versions even on failure. The ordinary/release CI retains pinned dependencies.
+Dependabot proposes weekly pip and Actions updates for human review. No automatic
+merge, deployment or publication is enabled by compatibility checks.
+
+Validation on 6 November 2026: 623 tests passed in both the pinned environment
+(HA 2026.9.4) and a clean latest-stable resolver environment (HA 2026.10.4,
+custom-component harness 0.13.375). All three coverage gates and Ruff passed.
+The standalone wheel and rebuilt source distribution passed checks without HA.
+Workflow/form YAML parsed locally; GitHub-hosted workflows will run after push.
+The fixture corpus currently contains synthetic pump and chemistry sequences;
+community hardware captures and additional owner validation are still needed.

@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a reproducible Gecko integration problem
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Download diagnostics from Settings → Devices & services → Gecko → entry menu.
+        Review attachments before sharing. Never post credentials, tokens, account IDs,
+        device serial numbers, addresses, or unredacted network captures.
+  - type: input
+    id: versions
+    attributes:
+      label: Home Assistant and Gecko integration versions
+      placeholder: HA 2026.10.4; Gecko 3.0.0; HACS installation
+    validations:
+      required: true
+  - type: textarea
+    id: equipment
+    attributes:
+      label: Equipment and capabilities
+      description: Spa/controller/gateway models and firmware, pump count and speeds, lighting type, Waterlab if fitted. No serial numbers.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected behaviour and actual behaviour
+      description: Include whether the same action works in the Gecko app and approximate time/timezone.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics and relevant logs
+      description: Attach reviewed diagnostics JSON here. Include a short relevant log excerpt if available. Explain if diagnostics cannot be downloaded.
+    validations:
+      required: true
+  - type: textarea
+    id: regression
+    attributes:
+      label: Previous behaviour and recovery
+      description: Did this work in an earlier version? Does reload/restart recover it? What happened immediately before the problem?

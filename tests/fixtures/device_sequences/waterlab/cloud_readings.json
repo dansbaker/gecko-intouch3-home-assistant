@@ -1,0 +1,63 @@
+{
+  "provenance": {
+    "evidence": "synthetic regression",
+    "description": "Cloud probe/manual readings, repeated old samples and absent values; shapes adapted from existing fork-derived tests, not a capture"
+  },
+  "events": [
+    {
+      "payload": {
+        "readings": {
+          "ph": {
+            "value": 7.4,
+            "unit": "pH",
+            "source": "monitor",
+            "updatedAt": "2026-11-05T10:00:00Z"
+          },
+          "alkalinity": {
+            "value": 100,
+            "unit": "ppm",
+            "source": "manual"
+          }
+        }
+      },
+      "expected_keys": [
+        "alkalinity",
+        "ph"
+      ],
+      "expected_ph": 7.4,
+      "expected_age_seconds": 93600
+    },
+    {
+      "payload": {
+        "readings": {
+          "ph": {
+            "value": 7.4,
+            "unit": "pH",
+            "source": "monitor",
+            "updatedAt": "2026-11-05T10:00:00Z"
+          }
+        }
+      },
+      "expected_keys": [
+        "ph"
+      ],
+      "expected_ph": 7.4,
+      "expected_age_seconds": 93600
+    },
+    {
+      "payload": {
+        "status": {
+          "calibration": {
+            "ph": 7.0
+          },
+          "readings": {
+            "orp": {
+              "value": null
+            }
+          }
+        }
+      },
+      "expected_keys": []
+    }
+  ]
+}

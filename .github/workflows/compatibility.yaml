@@ -1,0 +1,27 @@
+name: Latest Home Assistant compatibility
+on:
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  latest-stable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install latest stable HA test harness and protocol dependencies
+        run: |
+          pip install --upgrade pytest-homeassistant-custom-component homeassistant
+          pip install 'awscrt==0.36.1' 'awsiotsdk==1.31.0'
+          pip freeze > compatibility-versions.txt
+      - name: Run full suite against latest stable
+        run: python -m pytest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compatibility-versions
+          path: compatibility-versions.txt

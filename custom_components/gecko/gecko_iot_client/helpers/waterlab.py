@@ -30,18 +30,6 @@ def extract_readings(payload: Any) -> dict[str, dict]:
     status = payload.get("status")
     status = status if isinstance(status, dict) else {}
     result = {}
-    allowed = {
-        "ph",
-        "orp",
-        "waterTemp",
-        "alkalinity",
-        "chlorine",
-        "bromine",
-        "hardness",
-        "cyanuricAcid",
-        "freeChlorine",
-        "totalChlorine",
-    }
     for root in (payload, status):
         for collection in (
             "readings",
@@ -53,7 +41,7 @@ def extract_readings(payload: Any) -> dict[str, dict]:
             if not isinstance(records, dict):
                 continue
             for key, record in records.items():
-                if key not in allowed or not isinstance(record, dict):
+                if key not in READING_TYPES or not isinstance(record, dict):
                     continue
                 value = _number(record.get("value"))
                 if value is None or (key == "ph" and not 0 <= value <= 14):
@@ -109,4 +97,81 @@ def extract_readings(payload: Any) -> dict[str, dict]:
                     break
             if key in result:
                 break
+    return result
+
+
+READING_TYPES = frozenset(
+    {
+        "ph",
+        "orp",
+        "waterTemp",
+        "alkalinity",
+        "chlorine",
+        "bromine",
+        "hardness",
+        "cyanuricAcid",
+        "freeChlorine",
+        "totalChlorine",
+    }
+)
+
+
+def measurement_freshness(record: dict, now=None) -> dict:
+    """Report measurement age only for valid timezone-aware cloud timestamps.
+
+    A missing/invalid timestamp is unknown, never replaced by poll time. Future
+    timestamps are explicit clock skew, not evidence of a fresh measurement.
+    """
+    from datetime import datetime, timezone
+
+    now = now or datetime.now(timezone.utc)
+    for field in ("updatedAt", "lastUpdated"):
+        value = record.get(field)
+        if not isinstance(value, str):
+            continue
+        try:
+            measured = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if measured.tzinfo is None:
+                continue
+            age = (now - measured).total_seconds()
+        except (ValueError, OverflowError):
+            continue
+        return {
+            "measurement_timestamp": measured.isoformat(),
+            "measurement_age_seconds": max(0, int(age)),
+            "measurement_time_status": "future" if age < 0 else "known",
+        }
+    return {"measurement_time_status": "unknown"}
+
+
+def reading_diagnostics(readings: dict, now=None) -> list[dict]:
+    """Allowlist metadata; free text, values and unknown types stay private."""
+    result = []
+    allowed = {
+        "unit": {
+            "pH",
+            "ph",
+            "mV",
+            "V",
+            "ppm",
+            "mg/L",
+            "°C",
+            "°F",
+            "C",
+            "F",
+            "celsius",
+            "fahrenheit",
+        },
+        "source": {"monitor", "manual", "computed", "Gecko cloud summary"},
+        "status": {"high", "low", "normal", "ok", "warning", "error", "unknown"},
+    }
+    for kind, record in sorted(readings.items()):
+        if kind not in READING_TYPES or not isinstance(record, dict):
+            continue
+        item = {"type": kind, **measurement_freshness(record, now)}
+        for field, choices in allowed.items():
+            value = record.get(field)
+            if isinstance(value, str):
+                item[field] = value if value in choices else "unrecognized"
+        result.append(item)
     return result

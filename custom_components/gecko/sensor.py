@@ -21,6 +21,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .gecko_iot_client.helpers.waterlab import measurement_freshness
 from .const import DOMAIN
 from .coordinator import GeckoVesselCoordinator
 from .entity import GeckoEntityAvailabilityMixin, GeckoZoneEntityMixin
@@ -659,6 +660,7 @@ class GeckoWaterlabSensor(CoordinatorEntity, SensorEntity):
         record = self.coordinator.waterlab_readings.get(self._key, {})
         return {
             **{key: value for key, value in record.items() if key != "value"},
+            **measurement_freshness(record),
             "last_successful_poll": self.coordinator.waterlab_last_success,
             "data_source": "Gecko cloud Waterlab",
         }

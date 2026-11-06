@@ -1,0 +1,34 @@
+{
+  "__init__": {
+    "statements": 87.16,
+    "branches": 69.04
+  },
+  "api": {
+    "statements": 85.0,
+    "branches": 62.5
+  },
+  "application_credentials": {
+    "statements": 100.0,
+    "branches": 100
+  },
+  "aws_compat": {
+    "statements": 63.63,
+    "branches": 62.5
+  },
+  "connection_manager": {
+    "statements": 74.16,
+    "branches": 50.0
+  },
+  "const": {
+    "statements": 66.66,
+    "branches": 12.5
+  },
+  "coordinator": {
+    "statements": 73.89,
+    "branches": 62.96
+  },
+  "oauth_implementation": {
+    "statements": 100.0,
+    "branches": 100
+  }
+}

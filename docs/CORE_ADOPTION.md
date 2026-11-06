@@ -343,3 +343,11 @@ names and icons now use catalogs, existing IDs remain stable, diagnostic categor
 are assigned, setpoints no longer generate measurement statistics, and chemistry
 units are no longer guessed. READY connectivity and unknown status handling are
 corrected. No live Home Assistant installation, push or publication was performed.
+
+## Current tracking (6 November 2026)
+
+The [rule evidence checklist](QUALITY_CHECKLIST.md) supersedes initial gap notes
+above for current status. The historical measurements remain as dated milestones.
+Non-entity module regression floors now complement the full flow/entity gates;
+these floors do not claim Silver. Hardware/deployment evidence is recorded in
+[COMPATIBILITY.md](COMPATIBILITY.md) and [RELEASE_TESTING.md](RELEASE_TESTING.md).

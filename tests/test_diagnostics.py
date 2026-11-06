@@ -89,7 +89,16 @@ async def test_runtime_snapshot_is_useful_scoped_and_identity_free(hass, device)
         hass, entry.entry_id, "PRIVATE-VESSEL", "PRIVATE-MONITOR", "PRIVATE-NAME"
     )
     coord._zones = device.get_zones()
-    coord.waterlab_readings = {"ph": {"value": 7.4, "token": "PRIVATE-TOKEN"}}
+    coord.waterlab_readings = {
+        "ph": {
+            "value": 7.4,
+            "token": "PRIVATE-TOKEN",
+            "unit": "pH",
+            "source": "monitor",
+            "status": "normal",
+            "updatedAt": "2026-11-05T12:00:00Z",
+        }
+    }
     entry.runtime_data = SimpleNamespace(coordinators=[coord])
     connection = GeckoMonitorConnection(
         "PRIVATE-MONITOR", device, "wss://PRIVATE-TOKEN", "PRIVATE-NAME"
@@ -105,6 +114,11 @@ async def test_runtime_snapshot_is_useful_scoped_and_identity_free(hass, device)
     manager.get_connection.assert_called_once_with("PRIVATE-MONITOR")
     assert result["coordinators"][0]["zone_counts"]["flow"] == 3
     assert result["coordinators"][0]["waterlab"]["reading_count"] == 1
+    reading = result["coordinators"][0]["waterlab"]["readings"][0]
+    assert reading["type"] == "ph"
+    assert reading["source"] == "monitor"
+    assert reading["measurement_timestamp"] == "2026-11-05T12:00:00+00:00"
+    assert "value" not in reading
     snap = result["connections"]["vessel_1"]["client"]
     assert snap["zones"]["flow"]["samples"][0]["speed_config"] == {
         "minimum": 50,
