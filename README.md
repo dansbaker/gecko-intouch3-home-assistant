@@ -24,6 +24,8 @@ Available controls and sensors depend on your equipment and the data Gecko expos
 
 In HACS, add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a custom repository with category **Integration**, download version **3.0.0** or newer, and restart Home Assistant.
 
+On Home Assistant 2026.11 and newer, HACS is built in as the **Marketplace**. Go to **Settings → Marketplace → Add from link**, enter the same URL, then install version **3.0.0** or newer. Adding a custom repository asks you to connect GitHub once.
+
 For manual installation, copy the complete `custom_components/gecko` directory into your Home Assistant `custom_components` directory and restart. The bundled client directory must be included.
 
 Then open **Settings → Devices & services → Add integration → Gecko** and follow the Gecko OAuth login. Keep Home Assistant's **My** integration enabled for the standard callback. If a login has lost its refresh token, use the prompted reauthentication flow.
@@ -34,12 +36,25 @@ If Gecko has issued OAuth credentials for your application, the integration also
 
 This build uses the official integration's `gecko` domain and replaces the official integration in place. It retains official config-entry data and migrates older name-based entity identifiers where possible. A higher version number does **not** make HACS switch repositories automatically.
 
-To move from Gecko's official HACS repository:
+To move from Gecko's official repository on Home Assistant 2026.10 or older (HACS):
 
 1. Take a Home Assistant backup.
 2. Uninstall the official Gecko download **in HACS**. Keep the configured Gecko integration under **Settings → Devices & services**; deleting it would remove its configuration and entities.
 3. Add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a HACS custom repository with category **Integration** and download a revived release from this repository. Do not leave both repositories managing the same `custom_components/gecko` directory.
 4. Restart Home Assistant after the replacement is installed, then check that your existing spa entities are available. There is no need to add Gecko again when migrating from the official integration.
+
+#### Home Assistant 2026.11 and newer (Marketplace)
+
+The Marketplace protects the official repository's files while Gecko is configured. It won't uninstall them while a Gecko config entry exists; its **Delete and uninstall** button deletes the config entry with its devices and entities, so don't use it. It also won't install this repository while the official one still owns the `gecko` folder ("The gecko directory belongs to geckoal/ha-gecko-integration"). At startup, the Marketplace marks a repository whose folder is gone as no longer installed, so the swap goes like this:
+
+1. Take a Home Assistant backup.
+2. Move the official files out of `custom_components`. The **Terminal & SSH** app's web terminal works:
+   `mv /config/custom_components/gecko /config/gecko-official.bak`
+3. Restart Home Assistant (`ha core restart` in the same terminal). The log shows `geckoal/ha-gecko-integration is no longer on disk, it is no longer installed`. Your Gecko config entry stays and shows as not loaded until the next step.
+4. Go to **Settings → Marketplace → Add from link**, enter `https://github.com/dansbaker/gecko-intouch3-home-assistant`, and install version **3.0.0** or newer. If the install opens a new Gecko setup, close it; your existing entry is used.
+5. Restart Home Assistant and check that your existing spa entities are available.
+
+Once the entities are back, you can delete `/config/gecko-official.bak`. To go back, restore the backup from step 1.
 
 For manual upgrades, replace the complete `custom_components/gecko` directory before restarting; include the bundled client. The first revived release is **3.0.0**. Old `v0.1.x` releases contain the abandoned `gecko_spa` integration and are not an upgrade to Gecko's official integration.
 
