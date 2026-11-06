@@ -57,6 +57,10 @@ The cloud payload handling is covered by automated tests based on public fork ex
 
 Entity names and icons now use Home Assistant translations, and connection/firmware details appear as diagnostics. Existing entity IDs and Watercare option strings are retained. Target-temperature mirrors no longer contribute measurement statistics. MQTT ORP extensions retain their values without assuming a voltage unit; explicit-unit Waterlab readings retain their physical units. See the [entity metadata review](docs/ENTITY_METADATA.md).
 
+## Help expand hardware support
+
+Own extra pumps, RGB lighting, Waterlab or another configuration? [Download diagnostics and report your hardware](docs/HARDWARE_REPORTING.md)—no terminal or packet capture needed. The guide explains how to collect before/after snapshots using the Gecko app and [submit a hardware report](https://github.com/dansbaker/gecko-intouch3-home-assistant/issues/new?template=hardware_report.yml). Please include what physically happened, as well as what the app and HA showed.
+
 ## Troubleshooting and contributions
 
 If data stops updating, check the spa in the Gecko app and inspect the gateway/vessel connection entities. A pump running for filtration or heating can remain on after a manual off request; the integration preserves automatic-demand protection. Two-speed pumps parked at high speed can start at low first and wait for a device report before requesting high.

@@ -23,6 +23,13 @@ from custom_components.gecko.gecko_iot_client.models.zone_parser import (
 from custom_components.gecko.gecko_iot_client.transporters import AbstractTransporter
 
 
+@pytest.fixture(autouse=True)
+async def load_integration_metadata(hass, enable_custom_integrations):
+    from homeassistant.loader import async_get_integration
+
+    await async_get_integration(hass, "gecko")
+
+
 @pytest.fixture
 def device():
     client = GeckoIotClient("PRIVATE-DEVICE-ID", Mock(spec=AbstractTransporter))
@@ -75,6 +82,10 @@ async def test_no_runtime_diagnostics_are_safe_and_do_not_create_manager(hass):
     entry.add_to_hass(hass)
     before = set(hass.data)
     result = await async_get_config_entry_diagnostics(hass, entry)
+    assert result["report"]["schema_version"] == 1
+    assert result["report"]["integration_version"]
+    assert result["report"]["captured_at"]
+    assert result["report"]["home_assistant_version"]
     assert not result["runtime_loaded"]
     assert result["connections"] == {}
     assert result["coordinators"] == []

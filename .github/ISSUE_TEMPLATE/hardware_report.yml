@@ -1,0 +1,53 @@
+name: Hardware compatibility report
+description: Help support your pumps, lights, Waterlab or other spa equipment
+title: "[HARDWARE] "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No terminal or packet capture needed. Follow the [hardware report guide](https://github.com/dansbaker/gecko-intouch3-home-assistant/blob/master/docs/HARDWARE_REPORTING.md).
+        Start with Settings → Devices & services → Gecko → entry menu → Download diagnostics.
+        For a changing state, collect before/after files while using ONE control in the Gecko app.
+        Attach reviewed JSON files below. Do not upload raw debug logs or network captures.
+  - type: input
+    id: equipment
+    attributes:
+      label: Spa, controller and gateway models
+      description: Include firmware if known. No serial numbers, account details or addresses.
+    validations:
+      required: true
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Hardware fitted and what you want to test
+      placeholder: "Three pumps (pump 1 two-speed), RGB lights, Waterlab pH/ORP. Pump 3 is missing in HA."
+    validations:
+      required: true
+  - type: textarea
+    id: snapshots
+    attributes:
+      label: Attach diagnostics snapshots
+      description: Drag in reviewed before.json and after.json. One file is enough for an initial hardware inventory. Explain if Download diagnostics is unavailable. Versions are included automatically in new builds; provide them manually with older builds.
+    validations:
+      required: true
+  - type: textarea
+    id: observations
+    attributes:
+      label: What changed, and what physically happened?
+      description: Use the guide's table. Include local time/timezone, app action, physical observation and HA result. Do not infer physical behaviour solely from an app indicator.
+      placeholder: "14:05 Europe/London | Gecko app pump 3 ON | Pump 3 physically running | HA has no pump 3 entity | after.json"
+    validations:
+      required: true
+  - type: textarea
+    id: limits
+    attributes:
+      label: Anything you could not test?
+      description: Unknown models, unavailable controls, automatic heating/filtration, or samples that did not change. Reports of missing data are useful too.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Review before posting publicly
+      options:
+        - label: I reviewed attachments and removed credentials, identifiers and personal details. I understand this report is public.
+          required: true

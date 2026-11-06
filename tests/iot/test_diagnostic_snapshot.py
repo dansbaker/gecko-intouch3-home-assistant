@@ -78,5 +78,22 @@ def test_unknown_status_and_partial_zone_state_are_safe():
     assert snap["operation_mode"] == 0
     assert snap["zones"]["temperatureControl"]["samples"][0]["status"] is None
     assert not snap["zones"]["lighting"]["samples"][0]["has_effect"]
-    assert snap["zones"]["flow"]["samples"] == [{}]
+    assert snap["zones"]["flow"]["samples"] == [{"zone": "zone_1"}]
     assert "PRIVATE" not in json.dumps(snap, allow_nan=False)
+
+
+def test_rgb_snapshot_is_numeric_and_zone_labels_do_not_expose_ids():
+    from custom_components.gecko.gecko_iot_client.models.lighting_zone import RGB
+
+    c = client()
+    light = LightingZone("PRIVATE-LIGHT", {})
+    light.rgbi = RGB(255, 20, 0, 128)
+    c._zones = {ZoneType.LIGHTING_ZONE: [light]}
+    record = c.diagnostic_snapshot()["zones"]["lighting"]["samples"][0]
+    assert record["zone"] == "zone_1"
+    assert record["rgb"] == {"r": 255, "g": 20, "b": 0, "i": 128}
+    light.rgbi.r = "PRIVATE"
+    light.rgbi.i = float("nan")
+    result = c.diagnostic_snapshot()
+    assert result["zones"]["lighting"]["samples"][0]["rgb"]["r"] is None
+    assert "PRIVATE" not in json.dumps(result, allow_nan=False)

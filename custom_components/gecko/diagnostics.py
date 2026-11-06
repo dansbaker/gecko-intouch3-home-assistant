@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.const import __version__ as HA_VERSION
+from homeassistant.loader import async_get_integration
+from homeassistant.util import dt as dt_util
 
 from . import GeckoConfigEntry
 from .connection_manager import GECKO_CONNECTION_MANAGER_KEY
@@ -32,6 +35,7 @@ async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, config_entry: GeckoConfigEntry
 ) -> dict[str, Any]:
     """Read only this entry's runtime; do not create a connection manager."""
+    integration = await async_get_integration(hass, config_entry.domain)
     runtime = getattr(config_entry, "runtime_data", None)
     manager = hass.data.get(GECKO_CONNECTION_MANAGER_KEY)
     coordinators = []
@@ -66,6 +70,13 @@ async def async_get_config_entry_diagnostics(
         ):
             connections[label] = _connection_diagnostics(connection)
     return {
+        "report": {
+            "schema_version": 1,
+            "captured_at": dt_util.utcnow().isoformat(),
+            "home_assistant_version": HA_VERSION,
+            "integration_version": integration.version,
+            "collection": "modeled_snapshot_no_raw_logs",
+        },
         "config_entry": {
             "domain": config_entry.domain,
             "state": config_entry.state.value,

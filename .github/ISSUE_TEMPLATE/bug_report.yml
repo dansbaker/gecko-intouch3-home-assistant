@@ -6,6 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
+        For new hardware/capabilities, use the Hardware compatibility report form.
         Download diagnostics from Settings → Devices & services → Gecko → entry menu.
         Review attachments before sharing. Never post credentials, tokens, account IDs,
         device serial numbers, addresses, or unredacted network captures.
@@ -34,7 +35,7 @@ body:
     id: diagnostics
     attributes:
       label: Diagnostics and relevant logs
-      description: Attach reviewed diagnostics JSON here. Include a short relevant log excerpt if available. Explain if diagnostics cannot be downloaded.
+      description: Attach reviewed diagnostics JSON here. For hardware compatibility, use the before/after guide in docs/HARDWARE_REPORTING.md. Share only reviewed, redacted log excerpts if a maintainer requests them. Explain if diagnostics cannot be downloaded.
     validations:
       required: true
   - type: textarea

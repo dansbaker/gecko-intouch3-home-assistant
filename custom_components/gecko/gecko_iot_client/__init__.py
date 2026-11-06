@@ -285,7 +285,7 @@ class GeckoIotClient:
             if not isinstance(kind, ZoneType):
                 continue
             records = []
-            for zone in list(zones)[:128]:
+            for index, zone in enumerate(list(zones)[:128], 1):
                 record = {}
                 if isinstance(zone, FlowZone):
                     config = zone.speed_config or {}
@@ -299,6 +299,7 @@ class GeckoIotClient:
                         "active": zone.active if isinstance(zone.active, bool) else None,
                         "has_rgb": zone.rgbi is not None,
                         "has_effect": zone.effect is not None,
+                        "rgb": {key: number(getattr(zone.rgbi, key, None)) for key in ("r", "g", "b", "i")},
                     }
                 elif isinstance(zone, TemperatureControlZone):
                     record = {
@@ -308,6 +309,7 @@ class GeckoIotClient:
                         "maximum": number(zone.max_temperature_set_point_c_value),
                         "status": zone.status.value if isinstance(zone.status, Enum) and isinstance(zone.status.value, int) else None,
                     }
+                record["zone"] = f"zone_{index}"
                 records.append(record)
             snapshot["zones"][kind.value] = {"count": len(zones), "samples": records, "truncated": len(zones) > 128}
         return snapshot
