@@ -462,3 +462,17 @@ async def test_connection_diagnostics_fall_back_to_client_then_unknown(
         connection.gecko_client = client
         connection.connectivity_status = previous_status
         assert await hass.config_entries.async_unload(account.entry_id)
+
+
+@pytest.mark.parametrize(
+    ("vessel_name", "expected"),
+    [
+        ("Downstairs ", "downstairs"),
+        ("Master", "master"),
+        ("Hot-Tub 2", "hot_tub_2"),
+        ("  ", "vessel_123"),
+    ],
+)
+def test_vessel_object_id_is_a_valid_entity_id_part(vessel_name, expected):
+    coordinator = SimpleNamespace(vessel_name=vessel_name, vessel_id="vessel-123")
+    assert binary_sensor._vessel_object_id(coordinator) == expected
