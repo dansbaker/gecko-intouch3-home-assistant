@@ -48,7 +48,7 @@ To move from Gecko's official repository on Home Assistant 2026.10 or older (HAC
 The Marketplace protects the official repository's files while Gecko is configured. It won't uninstall them while a Gecko config entry exists; its **Delete and uninstall** button deletes the config entry with its devices and entities, so don't use it. It also won't install this repository while the official one still owns the `gecko` folder ("The gecko directory belongs to geckoal/ha-gecko-integration"). At startup, the Marketplace marks a repository whose folder is gone as no longer installed, so the swap goes like this:
 
 1. Take a Home Assistant backup.
-2. Move the official files out of `custom_components`. The **Terminal & SSH** app's web terminal works:
+2. Move the official files out of `custom_components`. On HAOS, the **Terminal & SSH** app's web terminal works (other installation types must use their actual configuration directory). Choose a backup destination that does not already exist; stop if `/config/gecko-official.bak` is present:
    `mv /config/custom_components/gecko /config/gecko-official.bak`
 3. Restart Home Assistant (`ha core restart` in the same terminal). The log shows `geckoal/ha-gecko-integration is no longer on disk, it is no longer installed`. Your Gecko config entry stays and shows as not loaded until the next step.
 4. Go to **Settings → Marketplace → Add from link**, enter `https://github.com/dansbaker/gecko-intouch3-home-assistant`, and install version **3.0.0** or newer. If the install opens a new Gecko setup, close it; your existing entry is used.
@@ -102,7 +102,7 @@ Thank you to the authors whose pull requests and fork work were incorporated or 
 | @shieldwed | [PR 32](https://github.com/geckoal/ha-gecko-integration/pull/32): pump initiator attribution. |
 | @karlg100 | [PR 37](https://github.com/geckoal/ha-gecko-integration/pull/37): telemetry, diagnostics, stable discovery, sparse-state handling, pump interpretation and tests. |
 | @jpwoodnet-boop | [Client PR 11](https://github.com/geckoal/gecko-iot-client/pull/11): preserving speed configuration separately from runtime state. |
-| @cwm12345 | [Client PR 13](https://github.com/geckoal/gecko-iot-client/pull/13): normalizing Super Savings mode names. |
+| @cwm12345 | [PR 10](https://github.com/dansbaker/gecko-intouch3-home-assistant/pull/10): Marketplace migration instructions; [PR 11](https://github.com/dansbaker/gecko-intouch3-home-assistant/pull/11): valid suggested entity IDs and native climate temperature compatibility. [Client PR 13](https://github.com/geckoal/gecko-iot-client/pull/13): normalizing Super Savings mode names. |
 | @nmonteleone18 | [Fork](https://github.com/nmonteleone18/ha-gecko-integration): RGB hue/brightness normalization helpers. |
 | @markus-lassfolk | [Fork](https://github.com/markus-lassfolk/hass_gecko_in_touch3_spa): Waterlab cloud reading shapes/endpoints, reported extension discovery and temperature/heat sensor ideas. |
 
