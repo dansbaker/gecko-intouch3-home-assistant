@@ -16,7 +16,7 @@ feature is completely missing in Home Assistant.
    describe the spa/controller/gateway models and equipment, and drag the file
    into the attachment field. Never include serial numbers or account details.
 
-New builds automatically include integration/HA versions, UTC capture time,
+Version 3.0.1 and newer automatically includes integration/HA versions, UTC capture time,
 connection status, pump counts and speed limits, anonymous zone labels, numeric
 light colour state and available chemistry metadata. Older releases may contain
 less detail: include versions manually if absent. Installing an unreleased build
