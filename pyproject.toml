@@ -17,7 +17,7 @@ license-files = [
 authors = [{name = "Gecko Alliance and community contributors"}]
 dependencies = [
     "aiohttp>=3.11.0",
-    "awscrt==0.36.1",
+    "awscrt==0.38.1",
     "awsiotsdk==1.31.0",
 ]
 
