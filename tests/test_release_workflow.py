@@ -90,8 +90,11 @@ def test_prepare_emits_version_and_publish_decision(tmp_path, monkeypatch):
     monkeypatch.setenv("GITHUB_OUTPUT", str(output))
     monkeypatch.setattr(release.sys, "argv", ["release.py", "prepare"])
     monkeypatch.setattr(release, "tag_exists", Mock(return_value=False))
+    monkeypatch.setattr(
+        release, "release_info", Mock(return_value=("4.5.6", tmp_path / "notes.md"))
+    )
     release.main()
-    assert output.read_text() == "version=3.0.0\npublish=true\n"
+    assert output.read_text() == "version=4.5.6\npublish=true\n"
 
 
 def test_publish_targets_exact_checked_commit(tmp_path, monkeypatch):
