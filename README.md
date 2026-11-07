@@ -90,6 +90,18 @@ Report problems and contribute changes in [this repository](https://github.com/d
 
 The 3.0.0 runtime has been deployed successfully on HAOS ARM64 with Home Assistant 2026.10.4: startup, preserved entity identities, connection diagnostics and reported states were verified. Device-specific RGB/effect semantics and eco/Watercare setpoint behaviour still need owner validation. Automated tests cannot establish physical spa behaviour. See the [hardware verification table](docs/COMPATIBILITY.md) and [release testing/rollback guide](docs/RELEASE_TESTING.md).
 
+### Firmware and serial metadata
+
+Some Gecko third-party accounts cannot read the identity shadow used by the
+Gecko app. Firmware and serial sensors stay unavailable when the permitted
+payloads provide no value; other controls continue to work. CO serial numbers
+come only from explicit serial fields. A vessel ID is not a CO serial, and we do
+not copy the home/EN serial into the spa/CO sensor. Existing entity identities
+are retained. If genuine metadata arrives, the corresponding sensor becomes
+available while the spa is connected. Sparse updates retain the last supplied
+metadata; a firmware value is not invented from a shadow revision or pack ID.
+See [issue #12](https://github.com/dansbaker/gecko-intouch3-home-assistant/issues/12).
+
 ## Community acknowledgements
 
 Thank you to the authors whose pull requests and fork work were incorporated or adapted:

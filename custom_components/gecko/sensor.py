@@ -220,6 +220,18 @@ class GeckoDeviceTelemetrySensor(
         self._attr_available = False
         self._update_from_coordinator()
 
+    @property
+    def available(self) -> bool:
+        """Missing identity metadata is unavailable, independent of spa controls."""
+        if self.entity_description.key in {
+            "home_firmware_version",
+            "spa_firmware_version",
+            "home_serial_number",
+            "spa_serial_number",
+        } and self.native_value in (None, ""):
+            return False
+        return super().available
+
     def _update_from_coordinator(self) -> None:
         """Update this sensor from retained device telemetry."""
         self._attr_native_value = self.coordinator.get_device_telemetry().get(

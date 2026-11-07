@@ -1,4 +1,5 @@
 """Telemetry tests adapted from upstream PR 37 against bundled models."""
+
 import unittest
 from types import SimpleNamespace
 from custom_components.gecko.gecko_iot_client.helpers import telemetry
@@ -175,7 +176,7 @@ class TestDeviceTelemetry(unittest.TestCase):
         self.assertEqual(extracted["spa_serial_number"], "CO-5678")
         self.assertEqual(sources["home_serial_number"], "monitorId")
 
-    def test_maps_only_mqtt_configuration_vessel_id_to_spa_serial(self):
+    def test_mqtt_and_rest_vessel_ids_are_not_spa_serial_numbers(self):
         mqtt_configuration = {
             "metadata": {
                 "configurationId": "V_0431_003-LL_001-A_000_V01",
@@ -195,18 +196,29 @@ class TestDeviceTelemetry(unittest.TestCase):
         mqtt_sources = telemetry.get_device_telemetry_sources(mqtt_configuration)
         rest_values = telemetry.get_device_telemetry(rest_vessel)
 
-        self.assertEqual(mqtt_values["spa_serial_number"], "252792551")
+        self.assertIsNone(mqtt_values["spa_serial_number"])
         self.assertEqual(
             mqtt_values["pack_configuration"],
             "V_0431_003-LL_001-A_000_V01",
         )
-        self.assertEqual(mqtt_sources["spa_serial_number"], "vesselId")
+        self.assertIsNone(mqtt_sources["spa_serial_number"])
         self.assertEqual(
             mqtt_sources["pack_configuration"],
             "metadata.configurationId",
         )
         self.assertIsNone(rest_values["spa_serial_number"])
         self.assertIsNone(rest_values["pack_configuration"])
+        # An explicit CO serial wins even when identifiers are also present.
+        mqtt_configuration["co_"] = {"sn": "REAL-CO", "fwVersion": "1.6.4"}
+        explicit = telemetry.get_device_telemetry(mqtt_configuration)
+        self.assertEqual(explicit["spa_serial_number"], "REAL-CO")
+        self.assertEqual(explicit["spa_firmware_version"], "1.6.4")
+        self.assertEqual(
+            telemetry.get_device_telemetry_sources(mqtt_configuration)[
+                "spa_serial_number"
+            ],
+            "co_.sn",
+        )
 
     def test_observed_rf_fields_do_not_make_shadow_version_firmware(self):
         shadow = {
@@ -262,9 +274,7 @@ class TestDeviceTelemetry(unittest.TestCase):
         redacted = telemetry.redact_raw_api_payload(source)
 
         self.assertEqual(redacted["brokerUrl"], telemetry.RAW_API_REDACTED)
-        self.assertEqual(
-            redacted["nested"]["accessToken"], telemetry.RAW_API_REDACTED
-        )
+        self.assertEqual(redacted["nested"]["accessToken"], telemetry.RAW_API_REDACTED)
         self.assertEqual(redacted["nested"]["serialNumber"], "EN-1234")
         self.assertEqual(
             redacted["nested"]["values"][0]["password"],
@@ -392,7 +402,9 @@ class FlowInitiatorTests(unittest.TestCase):
         self.assertTrue(telemetry.is_user_controlled_flow_active(self.zone, state))
         self.assertFalse(telemetry.is_flow_safe_to_deactivate(self.zone, state))
 
-    def test_active_zone_without_initiator_data_preserves_legacy_fan_state(self) -> None:
+    def test_active_zone_without_initiator_data_preserves_legacy_fan_state(
+        self,
+    ) -> None:
         self.assertTrue(telemetry.is_user_controlled_flow_active(self.zone))
 
     def test_non_heating_temperature_status_does_not_suppress_user_demand(

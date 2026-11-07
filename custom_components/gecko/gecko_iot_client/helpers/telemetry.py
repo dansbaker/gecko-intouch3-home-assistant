@@ -338,10 +338,9 @@ def _extract_device_telemetry(
                 reported, aliases, reported_path
             )
 
-    # Gecko's MQTT configuration identifies the spa-side CO as ``vesselId``.
-    # Do not treat the REST vessel API's cloud ``vesselId`` the same way; the
-    # MQTT payload is distinguished by its configuration metadata and accessory
-    # map, and carries a separate hardware-style identifier.
+    # MQTT configuration metadata supplies the pack configuration, not proof
+    # of a CO serial number. Cloud/transport identifiers must not be relabelled
+    # as hardware serials; only explicit serial fields supply the CO serial.
     configuration_metadata = reported.get("metadata")
     is_mqtt_configuration = (
         isinstance(configuration_metadata, dict)
@@ -358,18 +357,6 @@ def _extract_device_telemetry(
                 configuration_id,
                 configuration_path,
             )
-
-        if telemetry["spa_serial_number"][0] is None:
-            mqtt_vessel_id = reported.get("vesselId")
-            if (
-                not isinstance(mqtt_vessel_id, (dict, list))
-                and mqtt_vessel_id is not None
-            ):
-                vessel_id_path = ".".join((*reported_path, "vesselId"))
-                telemetry["spa_serial_number"] = (
-                    mqtt_vessel_id,
-                    vessel_id_path,
-                )
 
     return telemetry
 
