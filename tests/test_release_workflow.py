@@ -24,6 +24,12 @@ def test_release_archive_contains_only_runtime_files(tmp_path):
         assert "gecko_iot_client/LICENSE" in names
         assert "gecko_iot_client/NOTICE" in names
         assert "icons.json" in names
+        for filename, size in (("icon.png", 256), ("icon@2x.png", 512)):
+            image = archive.read(f"brand/{filename}")
+            assert image[:8] == b"\x89PNG\r\n\x1a\n"
+            assert image[12:16] == b"IHDR"
+            assert int.from_bytes(image[16:20], "big") == size
+            assert int.from_bytes(image[20:24], "big") == size
         assert not any(
             name.startswith(("tests/", "custom_components/")) or "__pycache__" in name
             for name in names
