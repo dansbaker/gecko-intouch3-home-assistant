@@ -12,7 +12,7 @@ ROOT = Path(__file__).parents[1]
 
 def _load_aws_compat_module():
     """Load the dependency-free compatibility helpers."""
-    path = ROOT / "custom_components" / "gecko" / "aws_compat.py"
+    path = ROOT / "custom_components" / "gecko_intouch3" / "aws_compat.py"
     spec = importlib.util.spec_from_file_location("gecko_aws_compat_test", path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
@@ -69,7 +69,7 @@ class AwsCompatibilityTests(unittest.TestCase):
 
     def test_manifest_pins_a_matched_aws_runtime(self) -> None:
         manifest = json.loads(
-            (ROOT / "custom_components" / "gecko" / "manifest.json").read_text(
+            (ROOT / "custom_components" / "gecko_intouch3" / "manifest.json").read_text(
                 encoding="utf-8"
             )
         )

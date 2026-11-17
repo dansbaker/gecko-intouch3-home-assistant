@@ -13,31 +13,31 @@ from homeassistant.components.light import ColorMode
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.gecko.api import OAuthGeckoApi
-from custom_components.gecko.climate import GeckoClimate
-from custom_components.gecko.coordinator import GeckoVesselCoordinator
-from custom_components.gecko.fan import GeckoFan
-from custom_components.gecko.light import GeckoLight
-from custom_components.gecko.sensor import GeckoTemperatureStatusSensor, GeckoFlowSpeedModeSensor
-from custom_components.gecko.binary_sensor import GeckoEcoModeBinarySensor, GeckoTemperatureHeatingBinarySensor
-from custom_components.gecko.gecko_iot_client.models.zone_parser import ZoneConfigurationParser
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
-from custom_components.gecko.gecko_iot_client.models.operation_mode_controller import OperationModeController
-from custom_components.gecko.gecko_iot_client.models.operation_mode import OperationMode
-from custom_components.gecko.gecko_iot_client.models.flow_zone import FlowZoneInitiator
-from custom_components.gecko.gecko_iot_client.transporters.mqtt.client import MqttClient
-from custom_components.gecko.gecko_iot_client.helpers import telemetry
+from custom_components.gecko_intouch3.api import OAuthGeckoApi
+from custom_components.gecko_intouch3.climate import GeckoClimate
+from custom_components.gecko_intouch3.coordinator import GeckoVesselCoordinator
+from custom_components.gecko_intouch3.fan import GeckoFan
+from custom_components.gecko_intouch3.light import GeckoLight
+from custom_components.gecko_intouch3.sensor import GeckoTemperatureStatusSensor, GeckoFlowSpeedModeSensor
+from custom_components.gecko_intouch3.binary_sensor import GeckoEcoModeBinarySensor, GeckoTemperatureHeatingBinarySensor
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser import ZoneConfigurationParser
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode_controller import OperationModeController
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode import OperationMode
+from custom_components.gecko_intouch3.gecko_iot_client.models.flow_zone import FlowZoneInitiator
+from custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.client import MqttClient
+from custom_components.gecko_intouch3.gecko_iot_client.helpers import telemetry
 
 
 @pytest.fixture
 def controls(hass):
-    entry = MockConfigEntry(domain="gecko", entry_id="restoration", data={})
+    entry = MockConfigEntry(domain="gecko_intouch3", entry_id="restoration", data={})
     entry.add_to_hass(hass)
     coordinator = GeckoVesselCoordinator(hass, entry.entry_id, "vessel", "monitor", "Spa")
     entry.runtime_data = SimpleNamespace(coordinators=[coordinator], api_client=None)
     published = []
     # Pure model fixtures still represent an available connection for actions.
-    from custom_components.gecko.connection_manager import GECKO_CONNECTION_MANAGER_KEY
+    from custom_components.gecko_intouch3.connection_manager import GECKO_CONNECTION_MANAGER_KEY
     connection = SimpleNamespace(is_fully_connected=True, gecko_client=None)
     hass.data[GECKO_CONNECTION_MANAGER_KEY] = Mock(get_connection=Mock(return_value=connection))
 
@@ -186,7 +186,7 @@ async def test_missing_refresh_token_triggers_reauth():
 
 
 async def test_refresh_requests_coalesce_and_success_is_briefly_reused(hass):
-    entry=MockConfigEntry(domain='gecko',entry_id='tokens',data={});entry.add_to_hass(hass)
+    entry=MockConfigEntry(domain='gecko_intouch3',entry_id='tokens',data={});entry.add_to_hass(hass)
     gate=asyncio.Event()
     async def refresh(_):
         await gate.wait()
@@ -202,7 +202,7 @@ async def test_refresh_requests_coalesce_and_success_is_briefly_reused(hass):
 
 
 async def test_rate_limit_honors_retry_after_and_returns_no_stale_url(hass):
-    entry=MockConfigEntry(domain='gecko',entry_id='limited',data={});entry.add_to_hass(hass)
+    entry=MockConfigEntry(domain='gecko_intouch3',entry_id='limited',data={});entry.add_to_hass(hass)
     error=ClientResponseError(request_info=SimpleNamespace(real_url='https://example.invalid'),history=(),status=429,headers={'Retry-After':'180'})
     api=SimpleNamespace(async_get_monitor_livestream=AsyncMock(side_effect=error));entry.runtime_data=SimpleNamespace(api_client=api)
     coord=GeckoVesselCoordinator(hass,entry.entry_id,'v','m','Spa');before=hass.loop.time()
@@ -213,7 +213,7 @@ async def test_rate_limit_honors_retry_after_and_returns_no_stale_url(hass):
 
 
 def test_mqtt_builder_uses_actual_keepalive_keyword():
-    from custom_components.gecko.gecko_iot_client.transporters.mqtt import client as client_module
+    from custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt import client as client_module
     mqtt=MqttClient()
     mqtt._parse_websocket_url=Mock(return_value=('example.invalid',{'authorizer':'auth','token':'token','signature':'sig'}))
     mqtt._wait_for_connection=Mock(return_value=True)

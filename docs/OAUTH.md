@@ -9,7 +9,7 @@ audience, and the existing login scopes including `offline_access`.
 
 Existing entries continue using their stored `auth_implementation`; adding another
 application does not silently replace that provider or change the account. The
-bundled `gecko` provider remains available for the custom integration. This is a
+bundled `gecko_intouch3` provider remains available for the custom integration. This is a
 compatibility measure, not the proposed final authentication design for core.
 
 ## Using credentials issued for your application

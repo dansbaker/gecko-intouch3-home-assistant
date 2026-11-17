@@ -9,9 +9,9 @@ import unittest
 from concurrent.futures import Future
 from unittest.mock import MagicMock, patch
 
-from custom_components.gecko.gecko_iot_client import GeckoIotClient
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
-from custom_components.gecko.gecko_iot_client.transporters import AbstractTransporter
+from custom_components.gecko_intouch3.gecko_iot_client import GeckoIotClient
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.transporters import AbstractTransporter
 
 
 class TestPublishConfirmation(unittest.TestCase):

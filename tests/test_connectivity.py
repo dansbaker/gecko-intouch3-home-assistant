@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import unittest
 
-from custom_components.gecko.gecko_iot_client.helpers import connectivity
+from custom_components.gecko_intouch3.gecko_iot_client.helpers import connectivity
 
 
 class ConnectivityTests(unittest.TestCase):

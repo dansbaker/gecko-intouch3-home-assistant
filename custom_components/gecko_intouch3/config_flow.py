@@ -13,6 +13,7 @@ from homeassistant.config_entries import SOURCE_REAUTH, ConfigFlowResult
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers import config_entry_oauth2_flow
 
+from .migration import SOURCE_ENTRY, is_legacy_intouch3
 from .api import ConfigFlowGeckoApi
 from .const import DOMAIN, OAUTH2_AUTHORIZE, OAUTH2_CLIENT_ID, OAUTH2_TOKEN
 from .oauth_implementation import GeckoPKCEOAuth2Implementation
@@ -30,8 +31,47 @@ class ConfigFlow(config_entry_oauth2_flow.AbstractOAuth2FlowHandler, domain=DOMA
 
     async def async_step_user(self, user_input=None) -> ConfigFlowResult:
         """Start OAuth while retaining the working custom-integration login."""
+        if self.source != SOURCE_REAUTH and any(
+            is_legacy_intouch3(entry)
+            for entry in self.hass.config_entries.async_entries("gecko")
+        ):
+            return await self.async_step_migrate()
         await self.async_register_implementation()
         return await super().async_step_user(user_input)
+
+    async def async_step_migrate(self, user_input=None) -> ConfigFlowResult:
+        """Offer an explicit import; leave unrelated local integrations alone."""
+        candidates = {
+            entry.entry_id: entry
+            for entry in self.hass.config_entries.async_entries("gecko")
+            if is_legacy_intouch3(entry)
+        }
+        if user_input is None:
+            return self.async_show_form(
+                step_id="migrate",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required("legacy_entry_id"): vol.In(
+                            {key: entry.title for key, entry in candidates.items()}
+                        )
+                    }
+                ),
+            )
+        old = candidates.get(user_input["legacy_entry_id"])
+        if old is None:
+            return self.async_abort(reason="legacy_entry_missing")
+        await self.async_set_unique_id(str(old.data["account_id"]))
+        self._abort_if_unique_id_configured()
+        await self.async_register_implementation()
+        return self.async_create_entry(
+            title=old.title,
+            data={
+                **old.data,
+                "auth_implementation": DOMAIN,
+                SOURCE_ENTRY: old.entry_id,
+            },
+            options=dict(old.options),
+        )
 
     async def async_step_reauth(
         self, entry_data: Mapping[str, Any]

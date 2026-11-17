@@ -1,6 +1,6 @@
 # Gecko integration development
 
-The Home Assistant integration and its IoT client are maintained and tested in this repository. HACS installs the complete `custom_components/gecko` directory; that custom installation still needs no separate client package or submodule. As preparation for core adoption, the root `pyproject.toml` also builds a standalone client wheel and source archive from the same source tree. The package is not published. See [CLIENT_PACKAGE.md](CLIENT_PACKAGE.md) for build checks and the current packaging boundary.
+The Home Assistant integration and its IoT client are maintained and tested in this repository. HACS installs the complete `custom_components/gecko_intouch3` directory; that custom installation still needs no separate client package or submodule. As preparation for core adoption, the root `pyproject.toml` also builds a standalone client wheel and source archive from the same source tree. The package is not published. See [CLIENT_PACKAGE.md](CLIENT_PACKAGE.md) for build checks and the current packaging boundary.
 
 ## Core adoption direction
 
@@ -8,14 +8,14 @@ The bundled layout below describes today's custom installation. The goal is Home
 
 ## Source layout
 
-- `custom_components/gecko/*.py`: Home Assistant setup, coordinators and entities.
-- `custom_components/gecko/gecko_iot_client/`: bundled API, MQTT transport and device models.
+- `custom_components/gecko_intouch3/*.py`: Home Assistant setup, coordinators and entities.
+- `custom_components/gecko_intouch3/gecko_iot_client/`: bundled API, MQTT transport and device models.
 - `tests/iot/`: client tests adapted to import the bundled package.
 - `tests/`: integration tests.
 
-Integration modules import the client with relative imports, such as `from .gecko_iot_client import GeckoIotClient`. Tests use `custom_components.gecko.gecko_iot_client`. Do not alias the bundled package in `sys.modules` or import a separately installed `gecko_iot_client`: that can create duplicate model/enum identities and load stale code.
+Integration modules import the client with relative imports, such as `from .gecko_iot_client import GeckoIotClient`. Tests use `custom_components.gecko_intouch3.gecko_iot_client`. Do not alias the bundled package in `sys.modules` or import a separately installed `gecko_iot_client`: that can create duplicate model/enum identities and load stale code.
 
-Client logs are now below `custom_components.gecko.gecko_iot_client`; enabling debug logging for `custom_components.gecko` includes them.
+Client logs are now below `custom_components.gecko_intouch3.gecko_iot_client`; enabling debug logging for `custom_components.gecko_intouch3` includes them.
 
 ## Tests
 
@@ -37,7 +37,7 @@ The Home Assistant baseline is `geckoal/ha-gecko-integration` at `aaf94de` (2.1.
 
 The consolidation merge retains the client repository's Git ancestry alongside the integration ancestry. Only its runtime package and tests are brought into the working tree; its separate packaging, release automation and generated documentation are not needed. Historical files remain accessible with Git. The `iot-upstream` remote is a source reference, not a maintained second project.
 
-The client license is preserved at `custom_components/gecko/gecko_iot_client/LICENSE`, with provenance in the root `NOTICE`. Existing integration licensing and notices are retained.
+The client license is preserved at `custom_components/gecko_intouch3/gecko_iot_client/LICENSE`, with provenance in the root `NOTICE`. Existing integration licensing and notices are retained.
 
 At consolidation, runtime changes are limited to package relocation, relative integration imports and replacing installed-distribution version lookup with the source identifier `1.0.3+bundled`. The subsequent restoration changes update client models, transport and entities together; see [RESTORATION.md](RESTORATION.md) for the changes and verification.
 
@@ -50,7 +50,7 @@ The unified CI job now measures statement and branch coverage and requires full
 coverage of `config_flow.py`. To reproduce:
 
 ```sh
-.venv/bin/python -m pytest --cov=custom_components.gecko --cov-branch --cov-report=term --cov-report=json:coverage.json
+.venv/bin/python -m pytest --cov=custom_components.gecko_intouch3 --cov-branch --cov-report=term --cov-report=json:coverage.json
 .venv/bin/python script/check_config_flow_coverage.py coverage.json
 ```
 
@@ -81,7 +81,7 @@ release and finish auditing the raw-data/model API boundary.
 
 ## Publishing integration releases
 
-Bump `custom_components/gecko/manifest.json` to the next stable semantic version,
+Bump `custom_components/gecko_intouch3/manifest.json` to the next stable semantic version,
 add matching notes at `docs/releases/<version>.md`, and merge to `master`.
 The Release workflow detects an untagged version, runs the complete test suite,
 HACS/hassfest validation and standalone package checks, then creates `v<version>`

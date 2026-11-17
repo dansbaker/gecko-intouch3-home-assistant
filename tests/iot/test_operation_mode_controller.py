@@ -5,8 +5,8 @@ Unit tests for OperationModeController functionality.
 import unittest
 from unittest.mock import Mock
 
-from custom_components.gecko.gecko_iot_client.models.operation_mode import OperationMode
-from custom_components.gecko.gecko_iot_client.models.operation_mode_controller import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode import OperationMode
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode_controller import (
     OperationModeController,
 )
 

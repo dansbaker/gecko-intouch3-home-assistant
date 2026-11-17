@@ -10,9 +10,9 @@ readme = "docs/CLIENT_PACKAGE.md"
 requires-python = ">=3.14"
 license = "GPL-3.0-or-later AND Apache-2.0"
 license-files = [
-    "custom_components/gecko/gecko_iot_client/LICENSE",
-    "custom_components/gecko/gecko_iot_client/LICENSE-APACHE",
-    "custom_components/gecko/gecko_iot_client/NOTICE",
+    "custom_components/gecko_intouch3/gecko_iot_client/LICENSE",
+    "custom_components/gecko_intouch3/gecko_iot_client/LICENSE-APACHE",
+    "custom_components/gecko_intouch3/gecko_iot_client/NOTICE",
 ]
 authors = [{name = "Gecko Alliance and community contributors"}]
 dependencies = [
@@ -26,11 +26,11 @@ Source = "https://github.com/dansbaker/gecko-intouch3-home-assistant"
 Issues = "https://github.com/dansbaker/gecko-intouch3-home-assistant/issues"
 
 [tool.setuptools]
-package-dir = {"" = "custom_components/gecko"}
+package-dir = {"" = "custom_components/gecko_intouch3"}
 include-package-data = false
 
 [tool.setuptools.packages.find]
-where = ["custom_components/gecko"]
+where = ["custom_components/gecko_intouch3"]
 include = ["gecko_iot_client", "gecko_iot_client.*"]
 namespaces = false
 

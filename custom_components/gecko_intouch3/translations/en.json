@@ -11,6 +11,13 @@
       "account": {
         "title": "Connect to your Gecko account",
         "description": "Account access could not be verified. Select Submit to retry. If authentication failed, sign in to Gecko again."
+      },
+      "migrate": {
+        "title": "Migrate existing in.touch 3 account",
+        "description": "Import this cloud account and move its entities to Gecko in.touch 3, retaining entity IDs. Back up Home Assistant first. The old account entry will be removed after transfer; in.touch 2 entries are left alone.",
+        "data": {
+          "legacy_entry_id": "Existing in.touch 3 account"
+        }
       }
     },
     "abort": {
@@ -26,7 +33,8 @@
       "user_rejected_authorize": "[%key:common::config_flow::abort::oauth2_user_rejected_authorize%]",
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]",
       "api_error": "Failed to connect to the Gecko API. Please try again later.",
-      "wrong_account": "Sign in with the same Gecko account as this integration."
+      "wrong_account": "Sign in with the same Gecko account as this integration.",
+      "legacy_entry_missing": "The selected in.touch 3 account is no longer available."
     },
     "create_entry": {
       "default": "[%key:common::config_flow::create_entry::authenticated%]"

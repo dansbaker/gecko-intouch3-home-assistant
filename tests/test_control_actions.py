@@ -10,11 +10,11 @@ from homeassistant.components.climate import ClimateEntityFeature
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_component import DATA_INSTANCES
 
-from custom_components.gecko.gecko_iot_client.models.operation_mode import OperationMode
-from custom_components.gecko.gecko_iot_client.models.operation_mode_controller import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode import OperationMode
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode_controller import (
     OperationModeController,
 )
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
 from .conftest import build_zones
 
@@ -101,7 +101,7 @@ async def test_failed_publish_is_translated_and_keeps_state(
     )
     with pytest.raises(HomeAssistantError) as caught:
         await call(hass, controls, domain, service, data)
-    assert caught.value.translation_domain == "gecko"
+    assert caught.value.translation_domain == "gecko_intouch3"
     assert caught.value.translation_key == "command_failed"
     assert "PRIVATE" not in str(caught.value)
     assert hass.states.get(entity.entity_id) == before
@@ -214,7 +214,7 @@ async def test_pump_start_timeout_cleans_up_confirmation_listener(controls):
     original_timeout = asyncio.timeout
     with (
         patch(
-            "custom_components.gecko.fan.asyncio.timeout", lambda _: original_timeout(0)
+            "custom_components.gecko_intouch3.fan.asyncio.timeout", lambda _: original_timeout(0)
         ),
         pytest.raises(HomeAssistantError) as caught,
     ):

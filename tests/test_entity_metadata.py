@@ -11,8 +11,8 @@ from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_component import DATA_INSTANCES
 
-from custom_components.gecko import binary_sensor, climate, fan, light, sensor
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3 import binary_sensor, climate, fan, light, sensor
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
 
 @pytest.mark.parametrize("module", [fan, light, climate, sensor, binary_sensor])
@@ -150,7 +150,7 @@ async def test_waterlab_metadata_requires_known_units(
 
 
 def test_translation_catalogs_cover_declared_enums_and_names():
-    root = Path(__file__).resolve().parents[1] / "custom_components/gecko"
+    root = Path(__file__).resolve().parents[1] / "custom_components/gecko_intouch3"
     source = json.loads((root / "strings.json").read_text())
     english = json.loads((root / "translations/en.json").read_text())
     assert source["entity"] == english["entity"]
@@ -189,7 +189,7 @@ async def test_user_entity_id_and_name_survive_metadata_upgrade(hass, account, c
     registry = er.async_get(hass)
     original = registry.async_get_or_create(
         "binary_sensor",
-        "gecko",
+        "gecko_intouch3",
         f"{account.entry_id}_spa_heating",
         config_entry=account,
         suggested_object_id="my_existing_heating",
@@ -384,7 +384,7 @@ async def test_extension_measurements_and_opt_in_diagnostics_are_distinct(
 async def test_vessel_connection_diagnostic_preserves_unknown_state(
     hass, account, cloud, vessel_status, state
 ):
-    from custom_components.gecko.connection_manager import GECKO_CONNECTION_MANAGER_KEY
+    from custom_components.gecko_intouch3.connection_manager import GECKO_CONNECTION_MANAGER_KEY
 
     assert await hass.config_entries.async_setup(account.entry_id)
     await hass.async_block_till_done()
@@ -406,7 +406,7 @@ async def test_vessel_connection_diagnostic_preserves_unknown_state(
 async def test_manager_absence_unsubscribes_entities_and_recovers(
     hass, account, cloud, network
 ):
-    from custom_components.gecko.connection_manager import GECKO_CONNECTION_MANAGER_KEY
+    from custom_components.gecko_intouch3.connection_manager import GECKO_CONNECTION_MANAGER_KEY
 
     assert await hass.config_entries.async_setup(account.entry_id)
     await hass.async_block_till_done()
@@ -433,7 +433,7 @@ async def test_manager_absence_unsubscribes_entities_and_recovers(
 async def test_connection_diagnostics_fall_back_to_client_then_unknown(
     hass, account, cloud, network
 ):
-    from custom_components.gecko.connection_manager import GECKO_CONNECTION_MANAGER_KEY
+    from custom_components.gecko_intouch3.connection_manager import GECKO_CONNECTION_MANAGER_KEY
 
     assert await hass.config_entries.async_setup(account.entry_id)
     await hass.async_block_till_done()

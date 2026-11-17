@@ -18,8 +18,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.gecko.gecko_iot_client.models.events import EventChannel
-from custom_components.gecko.gecko_iot_client.models.zone_parser import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.events import EventChannel
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser import (
     ZoneConfigurationParser,
 )
 
@@ -169,7 +169,7 @@ class FakeNetwork:
 @pytest.fixture
 def network(monkeypatch) -> FakeNetwork:
     """Replace the network edge in connection_manager with fakes."""
-    from custom_components.gecko import connection_manager
+    from custom_components.gecko_intouch3 import connection_manager
 
     fake = FakeNetwork()
     monkeypatch.setattr(connection_manager, "MqttTransporter", FakeTransporter)
@@ -193,10 +193,10 @@ def account(hass, enable_custom_integrations, network):
         }
     )
     entry = MockConfigEntry(
-        domain="gecko",
+        domain="gecko_intouch3",
         data={
             "account_id": "account",
-            "auth_implementation": "gecko",
+            "auth_implementation": "gecko_intouch3",
             "token": {
                 "access_token": "access",
                 "refresh_token": "refresh",
@@ -213,11 +213,11 @@ def account(hass, enable_custom_integrations, network):
 def cloud():
     with (
         patch(
-            "custom_components.gecko.config_entry_oauth2_flow.async_get_config_entry_implementation",
+            "custom_components.gecko_intouch3.config_entry_oauth2_flow.async_get_config_entry_implementation",
             AsyncMock(return_value=Mock()),
         ),
-        patch("custom_components.gecko.config_entry_oauth2_flow.OAuth2Session"),
-        patch("custom_components.gecko.OAuthGeckoApi", autospec=True) as cls,
+        patch("custom_components.gecko_intouch3.config_entry_oauth2_flow.OAuth2Session"),
+        patch("custom_components.gecko_intouch3.OAuthGeckoApi", autospec=True) as cls,
     ):
         api = cls.return_value
         api.async_get_monitor_livestream.return_value = {

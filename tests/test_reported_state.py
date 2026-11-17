@@ -3,8 +3,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from custom_components.gecko.gecko_iot_client.models.zone_parser import ZoneConfigurationParser
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser import ZoneConfigurationParser
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
 
 @pytest.fixture

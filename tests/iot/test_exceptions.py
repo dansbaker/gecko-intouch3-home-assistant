@@ -4,7 +4,7 @@ Unit tests for custom exceptions.
 
 import unittest
 
-from custom_components.gecko.gecko_iot_client.transporters.exceptions import (
+from custom_components.gecko_intouch3.gecko_iot_client.transporters.exceptions import (
     AuthenticationError,
     ConfigurationError,
     ConfigurationTimeoutError,

@@ -5,7 +5,7 @@ Unit tests for event system functionality.
 import unittest
 from unittest.mock import Mock, patch
 
-from custom_components.gecko.gecko_iot_client.models.events import EventChannel, EventEmitter
+from custom_components.gecko_intouch3.gecko_iot_client.models.events import EventChannel, EventEmitter
 
 
 class TestEventChannel(unittest.TestCase):

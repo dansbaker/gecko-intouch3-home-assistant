@@ -40,7 +40,7 @@ to their own licenses.
 
 BUNDLED GECKO IOT CLIENT
 
-The client under custom_components/gecko/gecko_iot_client originates from
+The client under custom_components/gecko_intouch3/gecko_iot_client originates from
 https://github.com/geckoal/gecko-iot-client, commit
 b799e0cef27099b18d87f52be359353d7ec53c1e (v1.0.3).
 Its GPL-3.0-or-later license is preserved in that directory as LICENSE.
@@ -60,7 +60,7 @@ not change source ownership or establish license approval for core inclusion.
 EXTRACTED PROTOCOL HELPERS
 
 Protocol helpers formerly beside the HA adapter now live under
-custom_components/gecko/gecko_iot_client/helpers. They retain their original
+custom_components/gecko_intouch3/gecko_iot_client/helpers. They retain their original
 Apache-2.0 license, per-file SPDX identification and author attribution. Both
 license texts and a provenance NOTICE are included in the standalone client
 artifacts. The original client source remains GPL-3.0-or-later. Combined package

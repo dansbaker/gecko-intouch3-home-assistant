@@ -43,7 +43,7 @@ def test_invalid_release_versions_fail_before_publication(
     component = tmp_path / "component"
     component.mkdir()
     (component / "manifest.json").write_text(
-        json.dumps({"version": version, "domain": "gecko"})
+        json.dumps({"version": version, "domain": "gecko_intouch3"})
     )
     monkeypatch.setattr(release, "COMPONENT", component)
     with pytest.raises(ValueError, match="major.minor.patch"):

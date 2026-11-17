@@ -2,9 +2,9 @@
 
 import unittest
 from types import SimpleNamespace
-from custom_components.gecko.gecko_iot_client.helpers import telemetry
-from custom_components.gecko.gecko_iot_client.models.flow_zone import FlowZoneInitiator
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.helpers import telemetry
+from custom_components.gecko_intouch3.gecko_iot_client.models.flow_zone import FlowZoneInitiator
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
 
 class TestDeviceTelemetry(unittest.TestCase):

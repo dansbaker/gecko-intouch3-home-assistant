@@ -7,7 +7,7 @@ from aiohttp import ClientResponseError, ServerDisconnectedError
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-DOMAIN = "gecko"
+DOMAIN = "gecko_intouch3"
 TOKEN = {"access_token": "access", "refresh_token": "refresh", "expires_in": 3600}
 
 
@@ -20,7 +20,7 @@ def custom_integrations(hass, enable_custom_integrations):
 @pytest.fixture
 def api():
     with patch(
-        "custom_components.gecko.config_flow.ConfigFlowGeckoApi", autospec=True
+        "custom_components.gecko_intouch3.config_flow.ConfigFlowGeckoApi", autospec=True
     ) as cls:
         api = cls.return_value
         api.async_get_user_id.return_value = "user"
@@ -38,15 +38,16 @@ def api():
 def oauth():
     with (
         patch(
-            "custom_components.gecko.oauth_implementation.GeckoPKCEOAuth2Implementation.async_generate_authorize_url",
+            "custom_components.gecko_intouch3.oauth_implementation.GeckoPKCEOAuth2Implementation.async_generate_authorize_url",
             AsyncMock(return_value="https://example.com/authorize"),
         ),
         patch(
-            "custom_components.gecko.oauth_implementation.GeckoPKCEOAuth2Implementation.async_resolve_external_data",
+            "custom_components.gecko_intouch3.oauth_implementation.GeckoPKCEOAuth2Implementation.async_resolve_external_data",
             AsyncMock(return_value=TOKEN.copy()),
         ) as resolve,
         patch(
-            "custom_components.gecko.async_setup_entry", AsyncMock(return_value=True)
+            "custom_components.gecko_intouch3.async_setup_entry",
+            AsyncMock(return_value=True),
         ),
     ):
         yield resolve
@@ -271,3 +272,66 @@ async def test_reauth_via_flow_manager_preserves_original_account(
             assert entry.data["token"]["access_token"] == "access"
     assert entry.data["vessels"] == [{"vesselId": "old-spa"}]
     api.async_get_vessels.assert_not_awaited()
+
+
+async def test_offer_and_import_legacy_cloud_account(hass, oauth):
+    """Import settings only after the user explicitly selects the old account."""
+    from custom_components.gecko_intouch3.migration import SOURCE_ENTRY
+
+    old = MockConfigEntry(
+        domain="gecko",
+        title="Existing spa",
+        data={
+            "account_id": "account",
+            "user_id": "user",
+            "vessels": [],
+            "token": TOKEN.copy(),
+            "auth_implementation": "gecko",
+        },
+        options={"test_option": True},
+    )
+    old.add_to_hass(hass)
+    result = await begin(hass)
+    assert result["step_id"] == "migrate"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"legacy_entry_id": old.entry_id}
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][SOURCE_ENTRY] == old.entry_id
+    assert result["data"]["auth_implementation"] == DOMAIN
+    assert result["options"] == old.options
+    assert hass.config_entries.async_get_entry(old.entry_id) is old
+
+
+async def test_local_intouch2_does_not_offer_import(hass, oauth):
+    old = MockConfigEntry(domain="gecko", data={"host": "192.0.2.1"})
+    old.add_to_hass(hass)
+    result = await begin(hass)
+    assert result["step_id"] == "pick_implementation"
+
+
+async def test_import_rejects_disappeared_source(hass, oauth):
+    old = MockConfigEntry(
+        domain="gecko",
+        data={
+            "account_id": "account",
+            "user_id": "user",
+            "vessels": [],
+            "token": TOKEN.copy(),
+        },
+    )
+    old.add_to_hass(hass)
+    result = await begin(hass)
+    # The flow must recheck the source at confirmation time.
+    from homeassistant.loader import IntegrationNotFound
+
+    with patch(
+        "homeassistant.loader.async_get_integration",
+        side_effect=IntegrationNotFound("gecko"),
+    ):
+        await hass.config_entries.async_remove(old.entry_id)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"legacy_entry_id": old.entry_id}
+    )
+    assert result["type"] is FlowResultType.ABORT
+    assert result["reason"] == "legacy_entry_missing"

@@ -27,7 +27,7 @@ def test_baseline_detects_line_and_branch_regressions():
     report = {
         "meta": {"branch_coverage": True},
         "files": {
-            "custom_components/gecko/api.py": {
+            "custom_components/gecko_intouch3/api.py": {
                 "summary": {
                     "num_statements": 10,
                     "covered_lines": 8,
@@ -40,7 +40,7 @@ def test_baseline_detects_line_and_branch_regressions():
     assert not any(error.startswith("api:") for error in gate.check(report, baseline))
     for key in ("covered_lines", "covered_branches"):
         bad = deepcopy(report)
-        bad["files"]["custom_components/gecko/api.py"]["summary"][key] -= 1
+        bad["files"]["custom_components/gecko_intouch3/api.py"]["summary"][key] -= 1
         assert any(error.startswith("api:") for error in gate.check(bad, baseline))
 
 
@@ -48,7 +48,7 @@ def test_missing_branch_counts_are_rejected():
     report = {
         "meta": {"branch_coverage": True},
         "files": {
-            "custom_components/gecko/api.py": {
+            "custom_components/gecko_intouch3/api.py": {
                 "summary": {"num_statements": 10, "covered_lines": 10}
             }
         },

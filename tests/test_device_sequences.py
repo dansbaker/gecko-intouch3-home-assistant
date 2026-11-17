@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from custom_components.gecko.gecko_iot_client.models.zone_parser import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser import (
     ZoneConfigurationParser,
 )
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
 
 @pytest.mark.parametrize(
@@ -50,7 +50,7 @@ def test_device_sequence(path):
 )
 def test_cloud_reading_sequence(path):
     from datetime import datetime, timezone
-    from custom_components.gecko.gecko_iot_client.helpers.waterlab import (
+    from custom_components.gecko_intouch3.gecko_iot_client.helpers.waterlab import (
         extract_readings,
         measurement_freshness,
     )

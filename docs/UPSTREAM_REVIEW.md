@@ -26,13 +26,13 @@ All 29 open issues and their discussion comments were read before reviewing the 
 
 The pinned `gecko-iot-client==1.0.3` converts a configuration such as `speed={minimum:50, maximum:100, stepIncrement:50}` into the scalar `50` in `ZoneConfigurationParser.parse_zones_configuration`. Consequently `FlowZone.speed_config` is `None`.
 
-At current speed 50, [the command helper](https://github.com/geckoal/ha-gecko-integration/blob/7041b7e61a186141c1ccdd7ac0684215176fa0e5/custom_components/gecko/telemetry.py#L548) falls back to `high=3`. At current speed 100, the same helper returns `high=100`. The command encoding therefore depends on current state instead of retained configuration. This reproduces a central complaint in issues 39/40/49. The PR's helper tests use simplified zone objects and miss this parser interaction.
+At current speed 50, [the command helper](https://github.com/geckoal/ha-gecko-integration/blob/7041b7e61a186141c1ccdd7ac0684215176fa0e5/custom_components/gecko_intouch3/telemetry.py#L548) falls back to `high=3`. At current speed 100, the same helper returns `high=100`. The command encoding therefore depends on current state instead of retained configuration. This reproduces a central complaint in issues 39/40/49. The PR's helper tests use simplified zone objects and miss this parser interaction.
 
 Preserve the raw speed ladder in the client/parser, then derive commands from that configuration. Explicitly test two-speed, single-speed, percentage and 99/100 readback devices through the actual parser. A telemetry value of 100 alone is insufficient evidence that a pump uses binary 99/100 encoding.
 
 ### PR 37 introduces more entities tied to obsolete zones
 
-[Temperature status](https://github.com/geckoal/ha-gecko-integration/blob/7041b7e61a186141c1ccdd7ac0684215176fa0e5/custom_components/gecko/sensor.py#L299), flow speed, eco and per-zone heating entities retain the original `self._zone`. Replacing the coordinator's zone with a heating zone leaves the temperature status sensor reporting `IDLE`.
+[Temperature status](https://github.com/geckoal/ha-gecko-integration/blob/7041b7e61a186141c1ccdd7ac0684215176fa0e5/custom_components/gecko_intouch3/sensor.py#L299), flow speed, eco and per-zone heating entities retain the original `self._zone`. Replacing the coordinator's zone with a heating zone leaves the temperature status sensor reporting `IDLE`.
 
 Extend the rebinding rule from 63 to every new zone-backed entity. Also guard the new raw-state and configuration callbacks against replaced clients; 63 only knows about the baseline zone/connectivity callbacks.
 
@@ -44,15 +44,15 @@ The useful parts to extract first are stable vessel/zone discovery keys, the sep
 
 ### PR 57 permanently ignores a legitimate previous color
 
-[Stale-echo handling](https://github.com/geckoal/ha-gecko-integration/blob/bc5ab632793b932751eb3ca6bc9bb31238047eb8/custom_components/gecko/light.py#L305) remembers the previous color without an expiry or clearing it after confirmation. Reproduction: red is reported, HA changes to blue, blue is confirmed, then the app changes back to red. HA continues reporting blue on subsequent red reports.
+[Stale-echo handling](https://github.com/geckoal/ha-gecko-integration/blob/bc5ab632793b932751eb3ca6bc9bb31238047eb8/custom_components/gecko_intouch3/light.py#L305) remembers the previous color without an expiry or clearing it after confirmation. Reproduction: red is reported, HA changes to blue, blue is confirmed, then the app changes back to red. HA continues reporting blue on subsequent red reports.
 
 Bound any echo suppression to an outstanding command and clear it after confirmation; use message ordering/version information where available. Reported state must eventually win. Add cases for failed publishes, rapid color changes, reconnects and external brightness changes.
 
-[Capability detection](https://github.com/geckoal/ha-gecko-integration/blob/bc5ab632793b932751eb3ca6bc9bb31238047eb8/custom_components/gecko/light.py#L218) uses `hasattr(rgbi/effect)`, but even an empty LightingZone configuration has both fields. That does not establish hardware support. The author reports successful hardware tests on their spa, which does not establish behavior on on/off-only zones. The JSON-safe list payload and executor dispatch are worth retaining.
+[Capability detection](https://github.com/geckoal/ha-gecko-integration/blob/bc5ab632793b932751eb3ca6bc9bb31238047eb8/custom_components/gecko_intouch3/light.py#L218) uses `hasattr(rgbi/effect)`, but even an empty LightingZone configuration has both fields. That does not establish hardware support. The author reports successful hardware tests on their spa, which does not establish behavior on on/off-only zones. The JSON-safe list payload and executor dispatch are worth retaining.
 
 ### PR 32 leaves old attribution when initiators become unknown
 
-[The update block](https://github.com/geckoal/ha-gecko-integration/blob/9e361bcbc8ede93c812f485c22a259056150986a/custom_components/gecko/fan.py#L121) only writes the attribute when `zone.initiators` is not None. A transition from `['UD']` to None leaves `['UD']` visible. Rebuild attributes each time, using None for unknown and `[]` for known-empty. Apply after 63 so attribution follows the current client.
+[The update block](https://github.com/geckoal/ha-gecko-integration/blob/9e361bcbc8ede93c812f485c22a259056150986a/custom_components/gecko_intouch3/fan.py#L121) only writes the attribute when `zone.initiators` is not None. A transition from `['UD']` to None leaves `['UD']` visible. Rebuild attributes each time, using None for unknown and `[]` for known-empty. Apply after 63 so attribution follows the current client.
 
 ### PR 33 assumes token replacement behavior that current HA does not have
 

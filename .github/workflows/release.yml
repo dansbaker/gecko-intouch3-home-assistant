@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
     paths:
-      - custom_components/gecko/manifest.json
+      - custom_components/gecko_intouch3/manifest.json
       - .github/workflows/release.yml
   workflow_dispatch:
 

@@ -20,7 +20,7 @@ Local restoration on 4 November 2026. Official integration baseline: `aaf94de` (
 - Markus fork: read-only cloud Waterlab chemistry, bounded reported extension metrics, current/target temperature sensors and heating sensor device classes. Waterlab polling is independent of MQTT and cannot disable the primary integration on unsupported endpoints.
 - Diagnostics use current runtime coordinators, work without setup runtime data and restrict connection output to the requested entry.
 
-Everything ships in `custom_components/gecko`, including the client. Existing licenses and source provenance are preserved. README credits identify contributors whose code or ideas were adapted. See [UPSTREAM_REVIEW.md](UPSTREAM_REVIEW.md) for the original issue/PR review and [FORK_REVIEW.md](FORK_REVIEW.md) for the full public fork decisions.
+Everything ships in `custom_components/gecko_intouch3`, including the client. Existing licenses and source provenance are preserved. README credits identify contributors whose code or ideas were adapted. See [UPSTREAM_REVIEW.md](UPSTREAM_REVIEW.md) for the original issue/PR review and [FORK_REVIEW.md](FORK_REVIEW.md) for the full public fork decisions.
 
 ## Verification and limits
 

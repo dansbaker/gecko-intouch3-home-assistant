@@ -6,16 +6,16 @@ from unittest.mock import Mock
 from homeassistant.helpers.entity_component import EntityComponent
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.gecko.connection_manager import async_get_connection_manager
-from custom_components.gecko.coordinator import GeckoVesselCoordinator
-from custom_components.gecko.fan import GeckoFan
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.connection_manager import async_get_connection_manager
+from custom_components.gecko_intouch3.coordinator import GeckoVesselCoordinator
+from custom_components.gecko_intouch3.fan import GeckoFan
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
 from .conftest import MONITOR_ID, build_zones
 
 
 async def test_registered_entity_rebinds_and_unsubscribes_on_removal(hass, network):
-    entry = MockConfigEntry(domain="gecko", data={})
+    entry = MockConfigEntry(domain="gecko_intouch3", data={})
     entry.add_to_hass(hass)
     coord = GeckoVesselCoordinator(hass, entry.entry_id, "vessel", MONITOR_ID, "Spa")
     zones = build_zones({"flow": {"1": {"active": False, "speed": 50}}})

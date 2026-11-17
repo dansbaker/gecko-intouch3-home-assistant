@@ -4,7 +4,7 @@ Unit tests for reconnection handler functionality.
 
 import unittest
 
-from custom_components.gecko.gecko_iot_client.transporters.mqtt.reconnection_handler import (  # noqa: E402
+from custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.reconnection_handler import (  # noqa: E402
     ReconnectionHandler,
 )
 

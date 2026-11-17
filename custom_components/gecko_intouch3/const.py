@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-DOMAIN = "gecko"
+DOMAIN = "gecko_intouch3"
 
 # --- Auth & Tenant Defaults ---
 _DEFAULT_OAUTH2_CLIENT_ID = "L81oh6hgUsvMg40TgTGoz4lxNy8eViM0"

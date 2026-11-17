@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
-COMPONENT = ROOT / "custom_components/gecko"
+COMPONENT = ROOT / "custom_components/gecko_intouch3"
 
 
 def release_info():
@@ -22,8 +22,8 @@ def release_info():
         raise ValueError(
             "Automatic releases require a stable major.minor.patch version"
         )
-    if manifest["domain"] != "gecko":
-        raise ValueError("The release must retain the gecko integration domain")
+    if manifest["domain"] != "gecko_intouch3":
+        raise ValueError("The release must use the gecko_intouch3 integration domain")
     notes = ROOT / "docs/releases" / f"{version}.md"
     if not notes.is_file():
         raise ValueError(f"Release notes are missing for {version}")
@@ -52,7 +52,7 @@ def build_archive(destination):
     """Package exactly the tracked runtime files, with no tests or caches."""
     tracked = (
         subprocess.check_output(
-            ["git", "ls-files", "-z", "custom_components/gecko"], cwd=ROOT
+            ["git", "ls-files", "-z", "custom_components/gecko_intouch3"], cwd=ROOT
         )
         .decode()
         .split("\0")
@@ -62,7 +62,7 @@ def build_archive(destination):
             source = ROOT / name
             archive.write(source, str(source.relative_to(COMPONENT)))
     with zipfile.ZipFile(destination) as archive:
-        if json.loads(archive.read("manifest.json"))["domain"] != "gecko":
+        if json.loads(archive.read("manifest.json"))["domain"] != "gecko_intouch3":
             raise ValueError("Invalid archive root")
         if "gecko_iot_client/__init__.py" not in archive.namelist():
             raise ValueError("The bundled client is missing")

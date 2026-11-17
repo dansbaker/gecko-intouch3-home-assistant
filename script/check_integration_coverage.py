@@ -24,7 +24,7 @@ def check(report, baseline=None):
         matches = [
             value
             for name, value in files.items()
-            if name.endswith(f"custom_components/gecko/{module}.py")
+            if name.endswith(f"custom_components/gecko_intouch3/{module}.py")
         ]
         if len(matches) != 1:
             errors.append(f"{module}: must be uniquely measured")
@@ -46,8 +46,8 @@ def check(report, baseline=None):
     measured = {
         name.rsplit("/", 1)[-1][:-3]
         for name in files
-        if "custom_components/gecko/" in name
-        and "/" not in name.split("custom_components/gecko/", 1)[1]
+        if "custom_components/gecko_intouch3/" in name
+        and "/" not in name.split("custom_components/gecko_intouch3/", 1)[1]
     }
     # Every top-level HA module must be accounted for in this or a stronger gate.
     stronger = {
@@ -61,7 +61,7 @@ def check(report, baseline=None):
         "binary_sensor",
         "diagnostics",
     }
-    source = Path(__file__).resolve().parents[1] / "custom_components/gecko"
+    source = Path(__file__).resolve().parents[1] / "custom_components/gecko_intouch3"
     expected = {path.stem for path in source.glob("*.py")}
     for module in sorted(expected - set(baseline) - stronger):
         errors.append(f"{module}: add an explicit coverage target")

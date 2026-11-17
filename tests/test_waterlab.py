@@ -4,10 +4,10 @@ from unittest.mock import AsyncMock
 import pytest
 from aiohttp import ClientResponseError
 from pytest_homeassistant_custom_component.common import MockConfigEntry
-from custom_components.gecko.coordinator import GeckoVesselCoordinator
-from custom_components.gecko.sensor import GeckoWaterlabSensor
-from custom_components.gecko.gecko_iot_client.helpers.waterlab import extract_readings
-from custom_components.gecko.gecko_iot_client.helpers.shadow_metrics import extract_extension_metrics, water_quality_kind
+from custom_components.gecko_intouch3.coordinator import GeckoVesselCoordinator
+from custom_components.gecko_intouch3.sensor import GeckoWaterlabSensor
+from custom_components.gecko_intouch3.gecko_iot_client.helpers.waterlab import extract_readings
+from custom_components.gecko_intouch3.gecko_iot_client.helpers.shadow_metrics import extract_extension_metrics, water_quality_kind
 
 
 def test_v6_chemistry_records_preserve_source_and_units():
@@ -44,7 +44,7 @@ def test_extensions_are_reported_only_bounded_and_finite():
 
 @pytest.fixture
 def cloud(hass):
-    entry=MockConfigEntry(domain='gecko',data={'account_id':'account'})
+    entry=MockConfigEntry(domain='gecko_intouch3',data={'account_id':'account'})
     entry.add_to_hass(hass)
     coordinator=GeckoVesselCoordinator(hass,entry.entry_id,'vessel','monitor','Spa')
     api=SimpleNamespace(async_get_vessel_detail=AsyncMock(return_value={'status':{'readings':{'ph':{'value':7.4,'source':'monitor'}}}}))

@@ -10,7 +10,7 @@ coordinator's zones with its own, never-updated copies.
 
 from __future__ import annotations
 
-from custom_components.gecko.connection_manager import async_get_connection_manager
+from custom_components.gecko_intouch3.connection_manager import async_get_connection_manager
 
 from .conftest import MONITOR_ID, build_zones
 

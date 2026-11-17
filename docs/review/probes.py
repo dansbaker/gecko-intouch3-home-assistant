@@ -10,7 +10,7 @@ def report(name, actual, expected):
  print(f'{name}: actual={actual!r}; expected={expected!r}; '+('PASS' if actual==expected else 'DEFECT REPRODUCED'))
 
 if pr==32:
- from custom_components.gecko.fan import GeckoFan
+ from custom_components.gecko_intouch3.fan import GeckoFan
  from gecko_iot_client.models.flow_zone import FlowZone
  z=FlowZone('1', {'name':'Pump'});z.active=True;z.speed=50;z.initiators_=['UD']
  f=GeckoFan.__new__(GeckoFan);f._zone=z;f._update_from_zone()
@@ -19,7 +19,7 @@ if pr==32:
 elif pr==33:
  from homeassistant.helpers.config_entry_oauth2_flow import LocalOAuth2ImplementationWithPkce
  async def check():
-  obj=LocalOAuth2ImplementationWithPkce(NS(),'gecko','public','https://example.com/auth','https://example.com/token')
+  obj=LocalOAuth2ImplementationWithPkce(NS(),'gecko_intouch3','public','https://example.com/auth','https://example.com/token')
   obj._token_request=AsyncMock(return_value={'access_token':'new','expires_in':3600})
   result=await obj.async_refresh_token({'access_token':'old','refresh_token':'existing','expires_in':3600})
   report('HA core already preserves omitted refresh token',result['refresh_token'],'existing')
@@ -27,8 +27,8 @@ elif pr==33:
 elif pr==37:
  from gecko_iot_client.models.zone_parser import ZoneConfigurationParser
  from gecko_iot_client.models.zone_types import ZoneType
- from custom_components.gecko.telemetry import get_supported_flow_speed_modes,get_flow_speed_value_for_mode
- from custom_components.gecko.sensor import GeckoTemperatureStatusSensor
+ from custom_components.gecko_intouch3.telemetry import get_supported_flow_speed_modes,get_flow_speed_value_for_mode
+ from custom_components.gecko_intouch3.sensor import GeckoTemperatureStatusSensor
  from gecko_iot_client.models.temperature_control_zone import TemperatureControlZone,TemperatureControlZoneStatus as S
  p=ZoneConfigurationParser();zs=p.parse_zones_configuration({'flow':{'1':{'name':'Pump','speed':{'minimum':50,'maximum':100,'stepIncrement':50}}}})
  z=zs[ZoneType.FLOW_ZONE][0];z.active=True;z.speed=50
@@ -45,14 +45,14 @@ elif pr==54:
  from homeassistant.helpers.config_entry_oauth2_flow import async_get_redirect_uri
  report('redirect with my loaded',async_get_redirect_uri(NS(config=NS(components={'my'}))),'https://my.home-assistant.io/redirect/oauth')
 elif pr==56:
- from custom_components.gecko.climate import GeckoClimate
+ from custom_components.gecko_intouch3.climate import GeckoClimate
  from gecko_iot_client.models.temperature_control_zone import TemperatureControlZone
  z=TemperatureControlZone('1',{});f=GeckoClimate.__new__(GeckoClimate);f._zone=z
  for value in [None,True,False]:
   z.mode_=NS(eco=value) if value is not None else None;f._update_from_zone()
   report('eco '+str(value),f._attr_extra_state_attributes['eco_mode'],value)
 elif pr==57:
- from custom_components.gecko.light import GeckoLight
+ from custom_components.gecko_intouch3.light import GeckoLight
  from gecko_iot_client.models.lighting_zone import RGB
  z=NS(active=True,rgbi=RGB(r=255,g=0,b=0,i=1),effect=None)
  f=GeckoLight.__new__(GeckoLight);f._attr_name='Light';f._get_zone_state=lambda:z
@@ -69,7 +69,7 @@ elif pr==57:
  f._zone=LightingZone('1',{})
  print('MODEL OBSERVATION: empty LightingZone advertises color via hasattr:',f._zone_supports_color(),'; hardware capability remains unproven')
 elif pr==60:
- from custom_components.gecko.climate import GeckoClimate,_HVAC_ACTION_BY_STATUS
+ from custom_components.gecko_intouch3.climate import GeckoClimate,_HVAC_ACTION_BY_STATUS
  from gecko_iot_client.models.temperature_control_zone import TemperatureControlZone,TemperatureControlZoneStatus as S
  from homeassistant.components.climate import HVACAction as A
  expected=[A.IDLE,A.HEATING,A.COOLING,A.IDLE,A.HEATING,A.HEATING,A.COOLING,A.DEFROSTING,A.IDLE]

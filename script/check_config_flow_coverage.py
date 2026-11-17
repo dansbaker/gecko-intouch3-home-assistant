@@ -12,7 +12,7 @@ def main() -> int:
     matches = [
         value
         for name, value in report["files"].items()
-        if name.replace("\\", "/").endswith("custom_components/gecko/config_flow.py")
+        if name.replace("\\", "/").endswith("custom_components/gecko_intouch3/config_flow.py")
     ]
     if len(matches) != 1:
         print("Config flow was not uniquely identified in the coverage report")

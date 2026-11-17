@@ -10,11 +10,11 @@ from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.entity_component import DATA_INSTANCES
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.gecko.gecko_iot_client.models.operation_mode import OperationMode
-from custom_components.gecko.gecko_iot_client.models.operation_mode_controller import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode import OperationMode
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode_controller import (
     OperationModeController,
 )
-from custom_components.gecko.select import async_setup_entry
+from custom_components.gecko_intouch3.select import async_setup_entry
 
 
 @pytest.fixture
@@ -82,7 +82,7 @@ async def test_publish_failure_is_a_translated_action_error(hass, control, failu
     with pytest.raises(HomeAssistantError) as caught:
         await command(hass, "Away")
     assert caught.value.translation_key == "command_failed"
-    assert caught.value.translation_domain == "gecko"
+    assert caught.value.translation_domain == "gecko_intouch3"
     assert "PRIVATE" not in str(caught.value)
     assert hass.states.get(control.entity.entity_id).state == "Standard"
 
@@ -114,7 +114,7 @@ async def test_unsupported_mode_is_rejected_before_publishing(control, option):
 
 
 async def test_setup_without_runtime_does_not_create_entities(hass):
-    entry = MockConfigEntry(domain="gecko", data={})
+    entry = MockConfigEntry(domain="gecko_intouch3", data={})
     add = Mock()
     await async_setup_entry(hass, entry, add)
     add.assert_not_called()

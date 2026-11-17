@@ -5,15 +5,15 @@ from unittest.mock import Mock
 
 import pytest
 
-from custom_components.gecko.gecko_iot_client import GeckoIotClient
-from custom_components.gecko.gecko_iot_client.models.operation_mode import OperationMode
-from custom_components.gecko.gecko_iot_client.models.zone_types import (
+from custom_components.gecko_intouch3.gecko_iot_client import GeckoIotClient
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode import OperationMode
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import (
     FlowZone,
     LightingZone,
     TemperatureControlZone,
     ZoneType,
 )
-from custom_components.gecko.gecko_iot_client.transporters import AbstractTransporter
+from custom_components.gecko_intouch3.gecko_iot_client.transporters import AbstractTransporter
 
 
 def client():
@@ -83,7 +83,7 @@ def test_unknown_status_and_partial_zone_state_are_safe():
 
 
 def test_rgb_snapshot_is_numeric_and_zone_labels_do_not_expose_ids():
-    from custom_components.gecko.gecko_iot_client.models.lighting_zone import RGB
+    from custom_components.gecko_intouch3.gecko_iot_client.models.lighting_zone import RGB
 
     c = client()
     light = LightingZone("PRIVATE-LIGHT", {})

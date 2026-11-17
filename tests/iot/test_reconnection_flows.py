@@ -16,12 +16,12 @@ import unittest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
-from custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter import MqttTransporter  # noqa: E402
+from custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter import MqttTransporter  # noqa: E402
 
 
 import pytest
 from types import SimpleNamespace
-from custom_components.gecko.gecko_iot_client.transporters.mqtt import transporter as transporter_module
+from custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt import transporter as transporter_module
 
 
 @pytest.fixture(autouse=True)
@@ -91,7 +91,7 @@ class TestScheduleReconnect(unittest.TestCase):
         self.refresh_callback = Mock(return_value=_make_test_broker_url())
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = False
@@ -118,7 +118,7 @@ class TestScheduleReconnect(unittest.TestCase):
         # Simulate failed reconnection attempts
         self.mock_mqtt.connect.side_effect = Exception("Connection refused")
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep", side_effect=capture_delay):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep", side_effect=capture_delay):
             # Trigger first reconnect
             self.transporter._schedule_reconnect()
             time.sleep(0.05)  # Let thread start
@@ -145,7 +145,7 @@ class TestScheduleReconnect(unittest.TestCase):
         """Test that successful reconnection resets the handler."""
         self.mock_mqtt.connect.return_value = None  # Success
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             self.transporter._schedule_reconnect()
 
         # Give the thread time to complete
@@ -161,7 +161,7 @@ class TestScheduleReconnect(unittest.TestCase):
         for _ in range(handler._max_attempts):
             handler.on_attempt()
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(self.transporter, "_handle_token_refresh"):
                 self.transporter._schedule_reconnect()
                 # Should reset handler and schedule delayed refresh
@@ -171,7 +171,7 @@ class TestScheduleReconnect(unittest.TestCase):
         """Test that failed reconnection schedules another attempt."""
         self.mock_mqtt.connect.side_effect = Exception("fail")
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(
                 self.transporter,
                 "_schedule_reconnect",
@@ -187,7 +187,7 @@ class TestScheduleReconnect(unittest.TestCase):
         """Test that reconnection aborts if stop event is set."""
         self.transporter._monitor_stop_event.set()
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             self.transporter._schedule_reconnect()
             time.sleep(0.2)
 
@@ -205,7 +205,7 @@ class TestTokenRefreshFlow(unittest.TestCase):
         self.refresh_callback = Mock(return_value=self.new_broker_url)
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = True
@@ -340,7 +340,7 @@ class TestScheduleRefreshRetry(unittest.TestCase):
         self.broker_url = _make_test_broker_url()
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = False
@@ -410,7 +410,7 @@ class TestConnectivityCallbackSuppression(unittest.TestCase):
         self.broker_url = _make_test_broker_url()
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = True
@@ -436,7 +436,7 @@ class TestConnectivityCallbackSuppression(unittest.TestCase):
         self.transporter._is_refreshing_token = True
 
         # Simulate connection event during refresh
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(self.transporter, "_setup_subscriptions"):
                 self.transporter._on_mqtt_connected(True)
 
@@ -494,7 +494,7 @@ class TestConnectivityCallbackSuppression(unittest.TestCase):
             "connectivity", lambda connected: connectivity_events.append(connected)
         )
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(self.transporter, "_setup_subscriptions"):
                 self.transporter._on_mqtt_connected(True)
 
@@ -511,7 +511,7 @@ class TestDisconnectionTriggersReconnect(unittest.TestCase):
         self.broker_url = _make_test_broker_url()
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = False
@@ -595,7 +595,7 @@ class TestTokenRefreshThenReconnect(unittest.TestCase):
         self.refresh_callback = Mock(return_value=self.new_broker_url)
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = False
@@ -612,7 +612,7 @@ class TestTokenRefreshThenReconnect(unittest.TestCase):
 
     def test_calls_handle_token_refresh(self):
         """Test that _schedule_token_refresh_then_reconnect invokes _handle_token_refresh."""
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(
                 self.transporter, "_handle_token_refresh"
             ) as mock_refresh:
@@ -642,7 +642,7 @@ class TestTokenRefreshThenReconnect(unittest.TestCase):
         """Test end-to-end: expired token disconnect → refresh → new URL applied."""
         self.mock_mqtt.connect.return_value = None
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             self.transporter._schedule_token_refresh_then_reconnect()
             time.sleep(0.3)
 
@@ -671,7 +671,7 @@ class TestTokenRefreshThenReconnect(unittest.TestCase):
         """Test that _is_reconnecting is not set by the refresh path."""
         self.mock_mqtt.connect.return_value = None
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             self.transporter._schedule_token_refresh_then_reconnect()
             time.sleep(0.3)
 
@@ -699,7 +699,7 @@ class TestTokenRefreshThenReconnect(unittest.TestCase):
             time.sleep(0.5)
             original_handle()
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(
                 self.transporter, "_handle_token_refresh", side_effect=counting_handle
             ):
@@ -725,7 +725,7 @@ class TestExpiryMonitorLoop(unittest.TestCase):
         self.broker_url = _make_test_broker_url(exp_seconds_from_now=100)
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = True
@@ -824,7 +824,7 @@ class TestRefreshBeforeConnect(unittest.TestCase):
         self.refresh_callback = Mock(return_value=self.new_broker_url)
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = False
@@ -881,7 +881,7 @@ class TestConnectionSuccessResetsHandler(unittest.TestCase):
         self.broker_url = _make_test_broker_url()
 
         with patch(
-            "custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
+            "custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.MqttClient"
         ) as MockClient:
             self.mock_mqtt = MockClient.return_value
             self.mock_mqtt.is_connected.return_value = True
@@ -902,7 +902,7 @@ class TestConnectionSuccessResetsHandler(unittest.TestCase):
         self.transporter._reconnection_handler.on_attempt()
         self.transporter._reconnection_handler.on_attempt()
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(self.transporter, "_setup_subscriptions"):
                 self.transporter._on_mqtt_connected(True)
 
@@ -912,7 +912,7 @@ class TestConnectionSuccessResetsHandler(unittest.TestCase):
         """Test that connection triggers subscription re-setup."""
         self.transporter._subscriptions_setup = True
 
-        with patch("custom_components.gecko.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.transporter.time.sleep"):
             with patch.object(self.transporter, "_setup_subscriptions") as mock_setup:
                 self.transporter._on_mqtt_connected(True)
                 time.sleep(0.3)

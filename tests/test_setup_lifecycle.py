@@ -7,7 +7,7 @@ from aiohttp import ClientResponseError
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import entity_registry as er
 
-from custom_components.gecko.connection_manager import GECKO_CONNECTION_MANAGER_KEY
+from custom_components.gecko_intouch3.connection_manager import GECKO_CONNECTION_MANAGER_KEY
 
 from .conftest import build_zones
 
@@ -42,7 +42,7 @@ async def test_failed_unload_keeps_live_runtime(hass, account, cloud, network):
     with patch.object(
         hass.config_entries, "async_unload_platforms", AsyncMock(return_value=False)
     ):
-        from custom_components.gecko import async_unload_entry
+        from custom_components.gecko_intouch3 import async_unload_entry
 
         assert not await async_unload_entry(hass, account)
     assert account.runtime_data is runtime
@@ -89,10 +89,10 @@ async def test_name_id_migration_preserves_entity_and_prefix_boundaries(
 ):
     registry = er.async_get(hass)
     old = registry.async_get_or_create(
-        "fan", "gecko", f"{account.entry_id}_Spa_pump_1", config_entry=account
+        "fan", "gecko_intouch3", f"{account.entry_id}_Spa_pump_1", config_entry=account
     )
     neighbour = registry.async_get_or_create(
-        "fan", "gecko", f"{account.entry_id}_Spa 2_pump_1", config_entry=account
+        "fan", "gecko_intouch3", f"{account.entry_id}_Spa 2_pump_1", config_entry=account
     )
     assert await hass.config_entries.async_setup(account.entry_id)
     await hass.async_block_till_done()

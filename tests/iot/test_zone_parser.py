@@ -5,11 +5,11 @@ Unit tests for zone configuration parser.
 import unittest
 from unittest.mock import patch
 
-from custom_components.gecko.gecko_iot_client.models.zone_parser import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser import (
     ZoneConfigurationParser,
     _extract_value_from_config,
 )
-from custom_components.gecko.gecko_iot_client.models.zone_types import FlowZone, LightingZone, ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import FlowZone, LightingZone, ZoneType
 
 
 class TestZoneParserUtilities(unittest.TestCase):
@@ -64,7 +64,7 @@ class TestZoneConfigurationParser(unittest.TestCase):
         """Test parsing configuration with unknown zone type."""
         zones_config = {"unknownZoneType": {"1": {"name": "Test Zone"}}}
 
-        with patch("custom_components.gecko.gecko_iot_client.models.zone_parser.logger") as mock_logger:
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser.logger") as mock_logger:
             result = self.parser.parse_zones_configuration(zones_config)
             self.assertEqual(result, {})
             mock_logger.warning.assert_called_with("Unknown zone type: unknownZoneType")
@@ -178,7 +178,7 @@ class TestZoneConfigurationParser(unittest.TestCase):
             }
         }
 
-        with patch("custom_components.gecko.gecko_iot_client.models.zone_parser.logger") as mock_logger:
+        with patch("custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser.logger") as mock_logger:
             result = self.parser.parse_zones_configuration(zones_config)
 
             # Should still get the valid zone
@@ -199,7 +199,7 @@ class TestZoneConfigurationParser(unittest.TestCase):
             ZoneType.TEMPERATURE_CONTROL_ZONE,
         )
 
-    @patch("custom_components.gecko.gecko_iot_client.models.zone_parser.logger")
+    @patch("custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser.logger")
     def test_logging_calls(self, mock_logger):
         """Test that appropriate logging calls are made."""
         zones_config = {

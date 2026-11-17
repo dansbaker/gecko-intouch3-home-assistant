@@ -23,7 +23,7 @@ def check(report: dict) -> list[str]:
     if report.get("meta", {}).get("branch_coverage") is not True:
         return ["Branch coverage measurement is required"]
     for module in sorted(MODULES):
-        suffix = f"custom_components/gecko/{module}.py"
+        suffix = f"custom_components/gecko_intouch3/{module}.py"
         matches = [
             value
             for name, value in report.get("files", {}).items()

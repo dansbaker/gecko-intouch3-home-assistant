@@ -4,8 +4,8 @@ Unit tests for OperationMode functionality.
 
 import unittest
 
-from custom_components.gecko.gecko_iot_client.models.events import EventChannel, EventEmitter
-from custom_components.gecko.gecko_iot_client.models.operation_mode import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.events import EventChannel, EventEmitter
+from custom_components.gecko_intouch3.gecko_iot_client.models.operation_mode import (
     OperationMode,
     OperationModeStatus,
 )

@@ -4,7 +4,7 @@ Unit tests for zone states and serialization functionality.
 
 import unittest
 
-from custom_components.gecko.gecko_iot_client.models.zone_types import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import (
     RGB,
     AbstractZone,
     FlowZone,

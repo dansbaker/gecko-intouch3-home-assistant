@@ -5,7 +5,7 @@ Unit tests for callback registry functionality.
 import unittest
 from unittest.mock import Mock
 
-from custom_components.gecko.gecko_iot_client.transporters.mqtt.callback_registry import (  # noqa: E402
+from custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.callback_registry import (  # noqa: E402
     CallbackRegistry,
 )
 

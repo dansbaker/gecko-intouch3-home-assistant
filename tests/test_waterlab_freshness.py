@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from custom_components.gecko.gecko_iot_client.helpers.waterlab import (
+from custom_components.gecko_intouch3.gecko_iot_client.helpers.waterlab import (
     measurement_freshness,
     reading_diagnostics,
 )
@@ -70,7 +70,7 @@ def test_diagnostics_allowlist_rejects_identity_and_arbitrary_text():
 
 def test_sensor_reports_measurement_age_independently_of_poll_time():
     from types import SimpleNamespace
-    from custom_components.gecko.sensor import GeckoWaterlabSensor
+    from custom_components.gecko_intouch3.sensor import GeckoWaterlabSensor
 
     coordinator = SimpleNamespace(
         entry_id="entry",

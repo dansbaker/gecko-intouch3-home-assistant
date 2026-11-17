@@ -14,11 +14,11 @@ from unittest.mock import patch
 
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
-from custom_components.gecko.const import DOMAIN
-from custom_components.gecko.coordinator import GeckoVesselCoordinator
-from custom_components.gecko.fan import GeckoFan
+from custom_components.gecko_intouch3.const import DOMAIN
+from custom_components.gecko_intouch3.coordinator import GeckoVesselCoordinator
+from custom_components.gecko_intouch3.fan import GeckoFan
 
 from .conftest import MONITOR_ID, build_zones
 

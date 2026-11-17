@@ -10,7 +10,7 @@ from homeassistant.components.climate import ClimateEntity
 from homeassistant.const import UnitOfTemperature
 
 from .conftest import build_zones
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 
 
 @pytest.mark.parametrize("native", [False, True])
@@ -25,8 +25,8 @@ def test_temperature_api_selection_and_reported_values(native):
     # A separate namespace avoids mutating the class used by other HA tests.
     with patch("builtins.hasattr", side_effect=has_attribute):
         module = runpy.run_path(
-            str(Path(__file__).parents[1] / "custom_components/gecko/climate.py"),
-            run_name="custom_components.gecko._climate_api_test",
+            str(Path(__file__).parents[1] / "custom_components/gecko_intouch3/climate.py"),
+            run_name="custom_components.gecko_intouch3._climate_api_test",
         )
     cls = module["GeckoClimate"]
     entity = cls.__new__(cls)

@@ -7,7 +7,7 @@ import json
 import unittest
 from datetime import datetime, timedelta
 
-from custom_components.gecko.gecko_iot_client.transporters.mqtt.token_manager import TokenManager  # noqa: E402
+from custom_components.gecko_intouch3.gecko_iot_client.transporters.mqtt.token_manager import TokenManager  # noqa: E402
 
 
 def _make_jwt_token(exp_timestamp: float) -> str:

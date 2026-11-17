@@ -22,43 +22,26 @@ Available controls and sensors depend on your equipment and the data Gecko expos
 
 ## Installation
 
-In HACS, add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a custom repository with category **Integration**, download version **3.0.0** or newer, and restart Home Assistant.
+Search for **Gecko in.touch 3** in HACS (Marketplace on supported Home Assistant installations) and install it. While the default-catalog submission is awaiting approval, or if search does not find it, add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a custom repository with category **Integration** (Marketplace: **Add from link**).
 
-On Home Assistant 2026.11 and newer, HACS is built in as the **Marketplace**. Go to **Settings → Marketplace → Add from link**, enter the same URL, then install version **3.0.0** or newer. Adding a custom repository asks you to connect GitHub once.
+Restart Home Assistant, then open **Settings → Devices & services → Add integration → Gecko in.touch 3**. For a new installation, follow the Gecko OAuth login. Keep Home Assistant's **My** integration enabled for the standard callback. Home Assistant-managed [application credentials](docs/OAUTH.md) are also supported.
 
-For manual installation, copy the complete `custom_components/gecko` directory into your Home Assistant `custom_components` directory and restart. The bundled client directory must be included.
+For manual installation, copy the complete `custom_components/gecko_intouch3` directory into your Home Assistant `custom_components` directory, including the bundled client, then restart.
 
-Then open **Settings → Devices & services → Add integration → Gecko** and follow the Gecko OAuth login. Keep Home Assistant's **My** integration enabled for the standard callback. If a login has lost its refresh token, use the prompted reauthentication flow.
+### Migrating from version 3.x or Gecko's official in.touch 3 integration
 
-If Gecko has issued OAuth credentials for your application, the integration also supports Home Assistant-managed [application credentials](docs/OAUTH.md). The existing bundled login remains available.
+**Version 4.0.0 changes the integration domain from `gecko` to `gecko_intouch3`.** This allows gazoodle's local in.touch 2 integration and this cloud in.touch 3 integration to coexist. The old abandoned `gecko_spa` implementation has a different schema and is not eligible for this import.
 
-### Existing installations
+1. Take a full Home Assistant backup before upgrading. Keep it until you have checked your entities and automations.
+2. Disable the existing **in.touch 3 cloud account** under **Settings → Devices & services**. Do not delete its config entry: the importer needs its settings and entity registrations. Do not disable or remove gazoodle's in.touch 2 integration.
+3. Install this release through HACS/Marketplace, then restart Home Assistant. Its files belong in `custom_components/gecko_intouch3`; it does not install a compatibility integration into the shared `gecko` directory.
+4. Add **Gecko in.touch 3**. Select the existing cloud account when offered the migration form. The importer copies its authentication and options, transfers entity/device registrations through Home Assistant's registry APIs, and removes the old cloud config entry only after transfer. Account entries are identified by their cloud configuration schema, not by the shared `gecko` name alone.
+5. Check that the spa reconnects and that entity IDs, device assignments, dashboards and automations still work. The migration is designed to retain entity IDs and devices; duplicate destination entities stop migration rather than overwriting them. Reauthenticate if Gecko has expired the saved credentials.
+6. Remove any obsolete in.touch 3 download from HACS/Marketplace once it is no longer configured. Do not remove `custom_components/gecko` if gazoodle's in.touch 2 integration owns it. Do not run both cloud integrations for the same spa.
 
-This build uses the official integration's `gecko` domain and replaces the official integration in place. It retains official config-entry data and migrates older name-based entity identifiers where possible. A higher version number does **not** make HACS switch repositories automatically.
+For a rollback, restore the Home Assistant backup and the matching old integration files. Downgrading only the files does not reverse the namespace migration. Backups contain authentication data; keep them private.
 
-To move from Gecko's official repository on Home Assistant 2026.10 or older (HACS):
-
-1. Take a Home Assistant backup.
-2. Uninstall the official Gecko download **in HACS**. Keep the configured Gecko integration under **Settings → Devices & services**; deleting it would remove its configuration and entities.
-3. Add `https://github.com/dansbaker/gecko-intouch3-home-assistant` as a HACS custom repository with category **Integration** and download a revived release from this repository. Do not leave both repositories managing the same `custom_components/gecko` directory.
-4. Restart Home Assistant after the replacement is installed, then check that your existing spa entities are available. There is no need to add Gecko again when migrating from the official integration.
-
-#### Home Assistant 2026.11 and newer (Marketplace)
-
-The Marketplace protects the official repository's files while Gecko is configured. It won't uninstall them while a Gecko config entry exists; its **Delete and uninstall** button deletes the config entry with its devices and entities, so don't use it. It also won't install this repository while the official one still owns the `gecko` folder ("The gecko directory belongs to geckoal/ha-gecko-integration"). At startup, the Marketplace marks a repository whose folder is gone as no longer installed, so the swap goes like this:
-
-1. Take a Home Assistant backup.
-2. Move the official files out of `custom_components`. On HAOS, the **Terminal & SSH** app's web terminal works (other installation types must use their actual configuration directory). Choose a backup destination that does not already exist; stop if `/config/gecko-official.bak` is present:
-   `mv /config/custom_components/gecko /config/gecko-official.bak`
-3. Restart Home Assistant (`ha core restart` in the same terminal). The log shows `geckoal/ha-gecko-integration is no longer on disk, it is no longer installed`. Your Gecko config entry stays and shows as not loaded until the next step.
-4. Go to **Settings → Marketplace → Add from link**, enter `https://github.com/dansbaker/gecko-intouch3-home-assistant`, and install version **3.0.0** or newer. If the install opens a new Gecko setup, close it; your existing entry is used.
-5. Restart Home Assistant and check that your existing spa entities are available.
-
-Once the entities are back, you can delete `/config/gecko-official.bak`. To go back, restore the backup from step 1.
-
-For manual upgrades, replace the complete `custom_components/gecko` directory before restarting; include the bundled client. The first revived release is **3.0.0**. Old `v0.1.x` releases contain the abandoned `gecko_spa` integration and are not an upgrade to Gecko's official integration.
-
-The original abandoned implementation used `gecko_spa`. Its configuration and entity identities are different: remove that old integration and configure Gecko again, then update automations referencing its entities. Do not run both implementations for the same spa. Keep a Home Assistant backup before migrating.
+Entity-based automations should retain their references. Update any integration-domain-specific references such as diagnostic download URLs, logger settings and custom Python imports from `gecko` to `gecko_intouch3`. The bundled standalone `gecko_iot_client` Python package keeps its existing import name.
 
 ## Waterlab
 
@@ -126,4 +109,4 @@ Our long-term goal is inclusion in Home Assistant Core, with Gold as the quality
 
 ## Source and licensing
 
-Gecko Alliance's original integration license and notices are retained in [LICENSE](LICENSE) and [NOTICE](NOTICE). The original IoT client sources retain their [GPL-3.0-or-later license](custom_components/gecko/gecko_iot_client/LICENSE). Extracted integration helpers retain [Apache-2.0](custom_components/gecko/gecko_iot_client/LICENSE-APACHE), with attribution in the [client NOTICE](custom_components/gecko/gecko_iot_client/NOTICE). The distribution includes both sets of source and notices; the root Apache license does not replace the client's GPL license. Gecko trademarks belong to Gecko Alliance.
+Gecko Alliance's original integration license and notices are retained in [LICENSE](LICENSE) and [NOTICE](NOTICE). The original IoT client sources retain their [GPL-3.0-or-later license](custom_components/gecko_intouch3/gecko_iot_client/LICENSE). Extracted integration helpers retain [Apache-2.0](custom_components/gecko_intouch3/gecko_iot_client/LICENSE-APACHE), with attribution in the [client NOTICE](custom_components/gecko_intouch3/gecko_iot_client/NOTICE). The distribution includes both sets of source and notices; the root Apache license does not replace the client's GPL license. Gecko trademarks belong to Gecko Alliance.

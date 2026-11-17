@@ -7,27 +7,27 @@ from unittest.mock import Mock
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.gecko.connection_manager import (
+from custom_components.gecko_intouch3.connection_manager import (
     GECKO_CONNECTION_MANAGER_KEY,
     GeckoMonitorConnection,
 )
-from custom_components.gecko.coordinator import GeckoVesselCoordinator
-from custom_components.gecko.diagnostics import async_get_config_entry_diagnostics
-from custom_components.gecko.gecko_iot_client import GeckoIotClient
-from custom_components.gecko.gecko_iot_client.models.connectivity import (
+from custom_components.gecko_intouch3.coordinator import GeckoVesselCoordinator
+from custom_components.gecko_intouch3.diagnostics import async_get_config_entry_diagnostics
+from custom_components.gecko_intouch3.gecko_iot_client import GeckoIotClient
+from custom_components.gecko_intouch3.gecko_iot_client.models.connectivity import (
     ConnectivityStatus,
 )
-from custom_components.gecko.gecko_iot_client.models.zone_parser import (
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_parser import (
     ZoneConfigurationParser,
 )
-from custom_components.gecko.gecko_iot_client.transporters import AbstractTransporter
+from custom_components.gecko_intouch3.gecko_iot_client.transporters import AbstractTransporter
 
 
 @pytest.fixture(autouse=True)
 async def load_integration_metadata(hass, enable_custom_integrations):
     from homeassistant.loader import async_get_integration
 
-    await async_get_integration(hass, "gecko")
+    await async_get_integration(hass, "gecko_intouch3")
 
 
 @pytest.fixture
@@ -77,7 +77,7 @@ def device():
 
 async def test_no_runtime_diagnostics_are_safe_and_do_not_create_manager(hass):
     entry = MockConfigEntry(
-        domain="gecko", title="PRIVATE-TITLE", data={"token": "PRIVATE-TOKEN"}
+        domain="gecko_intouch3", title="PRIVATE-TITLE", data={"token": "PRIVATE-TOKEN"}
     )
     entry.add_to_hass(hass)
     before = set(hass.data)
@@ -94,7 +94,7 @@ async def test_no_runtime_diagnostics_are_safe_and_do_not_create_manager(hass):
 
 
 async def test_runtime_snapshot_is_useful_scoped_and_identity_free(hass, device):
-    entry = MockConfigEntry(domain="gecko", title="PRIVATE-TITLE", data={})
+    entry = MockConfigEntry(domain="gecko_intouch3", title="PRIVATE-TITLE", data={})
     entry.add_to_hass(hass)
     coord = GeckoVesselCoordinator(
         hass, entry.entry_id, "PRIVATE-VESSEL", "PRIVATE-MONITOR", "PRIVATE-NAME"
@@ -145,7 +145,7 @@ async def test_runtime_snapshot_is_useful_scoped_and_identity_free(hass, device)
 
 @pytest.mark.parametrize("present", [False, True])
 async def test_missing_or_disposed_client_is_reportable(hass, present):
-    entry = MockConfigEntry(domain="gecko", data={})
+    entry = MockConfigEntry(domain="gecko_intouch3", data={})
     entry.add_to_hass(hass)
     coord = GeckoVesselCoordinator(hass, entry.entry_id, "vessel", "monitor", "Spa")
     entry.runtime_data = SimpleNamespace(coordinators=[coord])
@@ -169,7 +169,7 @@ async def test_missing_or_disposed_client_is_reportable(hass, present):
 
 
 async def test_runtime_with_no_manager_or_no_connection(hass):
-    entry = MockConfigEntry(domain="gecko", data={})
+    entry = MockConfigEntry(domain="gecko_intouch3", data={})
     entry.add_to_hass(hass)
     coord = GeckoVesselCoordinator(hass, entry.entry_id, "vessel", "monitor", "Spa")
     entry.runtime_data = SimpleNamespace(coordinators=[coord])

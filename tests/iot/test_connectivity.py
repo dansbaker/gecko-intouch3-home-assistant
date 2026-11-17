@@ -4,7 +4,7 @@ Unit tests for connectivity status functionality.
 
 import unittest
 
-from custom_components.gecko.gecko_iot_client.models.connectivity import ConnectivityStatus
+from custom_components.gecko_intouch3.gecko_iot_client.models.connectivity import ConnectivityStatus
 
 
 class TestConnectivityStatus(unittest.TestCase):

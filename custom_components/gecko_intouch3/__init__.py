@@ -13,6 +13,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_entry_oauth2_flow, config_validation as cv, device_registry as dr, entity_registry as er
 
 
+from .migration import async_transfer_legacy_entry
 from .api import OAuthGeckoApi
 from .oauth_implementation import GeckoPKCEOAuth2Implementation
 from .const import DOMAIN, OAUTH2_AUTHORIZE, OAUTH2_CLIENT_ID, OAUTH2_TOKEN
@@ -112,6 +113,7 @@ def _migrate_entity_unique_ids(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Gecko from a config entry."""
+    await async_transfer_legacy_entry(hass, entry)
     # Migrate entity unique_ids from old format (vessel_name) to new format (vessel_id)
     _migrate_entity_unique_ids(hass, entry)
 

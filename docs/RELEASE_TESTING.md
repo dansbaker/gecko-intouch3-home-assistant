@@ -11,7 +11,7 @@ Before release:
 7. Bump the manifest, add matching release notes and let the gated release workflow publish. Report physical tests separately from automated checks.
 
 To roll back, download the previous compatible revived release, replace the
-complete `custom_components/gecko` directory (including its client), and restart.
+complete `custom_components/gecko_intouch3` directory (including its client), and restart.
 If configuration or registry migrations are incompatible, restore the HA backup.
 Do not install legacy `v0.1.x` as a rollback from `3.x`: it uses `gecko_spa` and
 different entity identities. Keep one HACS repository managing `gecko`.

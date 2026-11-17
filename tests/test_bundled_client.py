@@ -17,8 +17,8 @@ class BundledClientTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             stage = Path(directory)
             shutil.copytree(
-                ROOT / "custom_components" / "gecko",
-                stage / "custom_components" / "gecko",
+                ROOT / "custom_components" / "gecko_intouch3",
+                stage / "custom_components" / "gecko_intouch3",
                 ignore=shutil.ignore_patterns("__pycache__", ".env"),
             )
             result = subprocess.run(
@@ -26,9 +26,9 @@ class BundledClientTests(unittest.TestCase):
 import importlib.util
 from pathlib import Path
 assert importlib.util.find_spec('gecko_iot_client') is None
-from custom_components.gecko import api, climate, connection_manager, coordinator, fan, light
-from custom_components.gecko import gecko_iot_client as client
-from custom_components.gecko.gecko_iot_client.models.zone_types import ZoneType
+from custom_components.gecko_intouch3 import api, climate, connection_manager, coordinator, fan, light
+from custom_components.gecko_intouch3 import gecko_iot_client as client
+from custom_components.gecko_intouch3.gecko_iot_client.models.zone_types import ZoneType
 assert api.GeckoApiClient is client.GeckoApiClient
 assert connection_manager.GeckoIotClient is client.GeckoIotClient
 for module in (climate, coordinator, fan, light):
@@ -46,7 +46,7 @@ assert client.__version__ == '3.0.0.dev1'
 
     def test_manifest_requires_no_separate_gecko_package(self):
         manifest = json.loads(
-            (ROOT / "custom_components" / "gecko" / "manifest.json").read_text()
+            (ROOT / "custom_components" / "gecko_intouch3" / "manifest.json").read_text()
         )
         self.assertFalse(
             any(requirement.startswith("gecko-iot-client") for requirement in manifest["requirements"])

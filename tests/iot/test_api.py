@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from aiohttp import ClientSession
 
-from custom_components.gecko.gecko_iot_client.api import GeckoApiClient
+from custom_components.gecko_intouch3.gecko_iot_client.api import GeckoApiClient
 
 
 class MockGeckoApiClient(GeckoApiClient):

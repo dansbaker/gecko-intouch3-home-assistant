@@ -12,10 +12,10 @@ from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from yarl import URL
 
-from custom_components.gecko.application_credentials import (
+from custom_components.gecko_intouch3.application_credentials import (
     async_get_auth_implementation,
 )
-from custom_components.gecko.const import API_BASE_URL, OAUTH2_CLIENT_ID
+from custom_components.gecko_intouch3.const import API_BASE_URL, OAUTH2_CLIENT_ID
 
 
 @pytest.mark.parametrize("name", [None, "My registered Gecko app"])
@@ -44,7 +44,7 @@ async def credentials(hass, enable_custom_integrations):
     assert await async_setup_component(hass, "application_credentials", {})
     await async_import_client_credential(
         hass,
-        "gecko",
+        "gecko_intouch3",
         ClientCredential("user-client", "user-secret", name="My Gecko app"),
         auth_domain="gecko.user-client",
     )
@@ -52,20 +52,20 @@ async def credentials(hass, enable_custom_integrations):
 
 async def test_stored_credentials_and_existing_public_client_coexist(hass, credentials):
     with patch(
-        "custom_components.gecko.async_setup_entry", AsyncMock(return_value=True)
+        "custom_components.gecko_intouch3.async_setup_entry", AsyncMock(return_value=True)
     ):
         result = await hass.config_entries.flow.async_init(
-            "gecko", context={"source": "user"}
+            "gecko_intouch3", context={"source": "user"}
         )
     implementations = await config_entry_oauth2_flow.async_get_implementations(
-        hass, "gecko"
+        hass, "gecko_intouch3"
     )
     assert result["step_id"] == "pick_implementation"
     assert implementations["gecko.user-client"].client_id == "user-client"
     assert implementations["gecko.user-client"].name == "My Gecko app"
-    assert implementations["gecko"].client_id == OAUTH2_CLIENT_ID
+    assert implementations["gecko_intouch3"].client_id == OAUTH2_CLIENT_ID
     # Older entries retain their original provider instead of silently using new credentials.
-    legacy = MockConfigEntry(domain="gecko", data={"auth_implementation": "gecko"})
+    legacy = MockConfigEntry(domain="gecko_intouch3", data={"auth_implementation": "gecko_intouch3"})
     assert (
         await config_entry_oauth2_flow.async_get_config_entry_implementation(
             hass, legacy
@@ -82,14 +82,14 @@ async def test_application_credential_flow_records_selected_provider(hass, crede
     }
     with (
         patch(
-            "custom_components.gecko.config_flow.ConfigFlowGeckoApi", autospec=True
+            "custom_components.gecko_intouch3.config_flow.ConfigFlowGeckoApi", autospec=True
         ) as api_cls,
         patch(
-            "custom_components.gecko.oauth_implementation.GeckoPKCEOAuth2Implementation.async_resolve_external_data",
+            "custom_components.gecko_intouch3.oauth_implementation.GeckoPKCEOAuth2Implementation.async_resolve_external_data",
             AsyncMock(return_value=token),
         ),
         patch(
-            "custom_components.gecko.async_setup_entry", AsyncMock(return_value=True)
+            "custom_components.gecko_intouch3.async_setup_entry", AsyncMock(return_value=True)
         ),
     ):
         api = api_cls.return_value
@@ -97,7 +97,7 @@ async def test_application_credential_flow_records_selected_provider(hass, crede
         api.async_get_user_info.return_value = {"account": {"accountId": "account"}}
         api.async_get_vessels.return_value = []
         result = await hass.config_entries.flow.async_init(
-            "gecko", context={"source": "user"}
+            "gecko_intouch3", context={"source": "user"}
         )
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], {"implementation": "gecko.user-client"}
@@ -117,7 +117,7 @@ async def test_application_credential_flow_records_selected_provider(hass, crede
 async def test_real_code_exchange_uses_selected_client_and_pkce(
     hass, aioclient_mock, secret
 ):
-    from custom_components.gecko.const import OAUTH2_TOKEN
+    from custom_components.gecko_intouch3.const import OAUTH2_TOKEN
 
     impl = await async_get_auth_implementation(
         hass, "gecko.user-client", ClientCredential("user-client", secret)
@@ -147,14 +147,14 @@ async def test_real_code_exchange_uses_selected_client_and_pkce(
 async def test_refresh_uses_application_credentials_and_preserves_entry_data(
     hass, aioclient_mock
 ):
-    from custom_components.gecko.api import OAuthGeckoApi
-    from custom_components.gecko.const import OAUTH2_TOKEN
+    from custom_components.gecko_intouch3.api import OAuthGeckoApi
+    from custom_components.gecko_intouch3.const import OAUTH2_TOKEN
 
     impl = await async_get_auth_implementation(
         hass, "gecko.user-client", ClientCredential("user-client", "secret")
     )
     entry = MockConfigEntry(
-        domain="gecko",
+        domain="gecko_intouch3",
         data={
             "auth_implementation": "gecko.user-client",
             "account_id": "account",
@@ -194,14 +194,14 @@ async def test_refresh_failures_reauthenticate_only_for_invalid_credentials(
         OAuth2TokenRequestTransientError,
     )
 
-    from custom_components.gecko.api import OAuthGeckoApi
-    from custom_components.gecko.const import OAUTH2_TOKEN
+    from custom_components.gecko_intouch3.api import OAuthGeckoApi
+    from custom_components.gecko_intouch3.const import OAUTH2_TOKEN
 
     impl = await async_get_auth_implementation(
         hass, "gecko.user-client", ClientCredential("user-client", "secret")
     )
     entry = MockConfigEntry(
-        domain="gecko",
+        domain="gecko_intouch3",
         data={
             "auth_implementation": "gecko.user-client",
             "account_id": "account",
