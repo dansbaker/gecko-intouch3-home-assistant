@@ -34,10 +34,30 @@ For manual installation, copy the complete `custom_components/gecko_intouch3` di
 
 1. Take a full Home Assistant backup before upgrading. Keep it until you have checked your entities and automations.
 2. Disable the existing **in.touch 3 cloud account** under **Settings → Devices & services**. Do not delete its config entry: the importer needs its settings and entity registrations. Do not disable or remove gazoodle's in.touch 2 integration.
-3. Install this release through HACS/Marketplace, then restart Home Assistant. Its files belong in `custom_components/gecko_intouch3`; it does not install a compatibility integration into the shared `gecko` directory.
+3. Install this release, then restart Home Assistant. **Marketplace on HA 2026.11 can block an update across the domain change:** follow the [Marketplace-specific preparation below](#marketplace-on-home-assistant-202611-and-newer) before installing. Keep the disabled old config entry for the importer. The new files belong in `custom_components/gecko_intouch3`; this release does not install a compatibility integration into the shared `gecko` directory.
 4. Add **Gecko in.touch 3**. Select the existing cloud account when offered the migration form. The importer copies its authentication and options, transfers entity/device registrations through Home Assistant's registry APIs, and removes the old cloud config entry only after transfer. Account entries are identified by their cloud configuration schema, not by the shared `gecko` name alone.
 5. Check that the spa reconnects and that entity IDs, device assignments, dashboards and automations still work. The migration is designed to retain entity IDs and devices; duplicate destination entities stop migration rather than overwriting them. Reauthenticate if Gecko has expired the saved credentials.
-6. Remove any obsolete in.touch 3 download from HACS/Marketplace once it is no longer configured. Do not remove `custom_components/gecko` if gazoodle's in.touch 2 integration owns it. Do not run both cloud integrations for the same spa.
+6. Remove any obsolete in.touch 3 download from HACS/Marketplace once it is no longer configured. If you moved the old files aside, retain them until testing is complete. Do not remove `custom_components/gecko` if gazoodle's in.touch 2 integration owns it. Do not run both cloud integrations for the same spa.
+
+#### Marketplace on Home Assistant 2026.11 and newer
+
+Marketplace may report that this repository “changed its domain from gecko to gecko_intouch3, uninstall it and install it again”, then refuse uninstall with `repository_in_use` because the old account entry still exists. Disabling the entry alone does not remove this installation block. **Do not use Delete and uninstall or delete the old config entry**: that would remove the settings and registrations needed by the importer.
+
+After taking the backup and disabling the old **in.touch 3 cloud account** in steps 1–2:
+
+1. Verify that `/config/custom_components/gecko/manifest.json` points to this repository or Gecko's official `geckoal/ha-gecko-integration`, **not** `gazoodle/gecko-home-assistant`. If the folder belongs to gazoodle's local in.touch 2 integration, leave it alone; this workaround does not apply to that folder.
+2. Move only the verified old cloud integration's `gecko` directory outside `custom_components`. On HAOS, use the **Terminal & SSH** app's web terminal. First check that `/config/gecko-intouch3-before-v4` does not already exist; if it does, choose a different unused backup name. This command refuses to overwrite that destination:
+
+   ```sh
+   test ! -e /config/gecko-intouch3-before-v4 && mv /config/custom_components/gecko /config/gecko-intouch3-before-v4
+   ```
+
+   Other installation types must use their actual Home Assistant configuration directory. Move the directory; do not delete its files or edit `.storage`.
+3. Restart Home Assistant. Marketplace should now mark the old download as no longer installed. The disabled cloud account entry must remain under **Devices & services**; it may show that its integration files are unavailable. If Marketplace still considers the repository installed, stop and report the error rather than deleting the config entry.
+4. Install **Gecko in.touch 3 4.0.0 or newer** through Marketplace (use **Add from link** with this repository's URL if it is not in the catalog), then restart Home Assistant again. The new directory is `custom_components/gecko_intouch3`.
+5. Continue at step 4 of the main migration instructions: add **Gecko in.touch 3** and select the retained cloud account in the import form. If installation opened a setup flow automatically, continue that flow rather than starting a second one.
+
+Thanks to @cwm12345 for reporting and testing this path in [issue #20](https://github.com/dansbaker/gecko-intouch3-home-assistant/issues/20): their two-spa migration preserved 66 entity IDs and both device IDs. This workaround addresses Marketplace installation; the importer still performs the registry migration.
 
 For a rollback, restore the Home Assistant backup and the matching old integration files. Downgrading only the files does not reverse the namespace migration. Backups contain authentication data; keep them private.
 
@@ -97,7 +117,7 @@ Thank you to the authors whose pull requests and fork work were incorporated or 
 | @shieldwed | [PR 32](https://github.com/geckoal/ha-gecko-integration/pull/32): pump initiator attribution. |
 | @karlg100 | [PR 37](https://github.com/geckoal/ha-gecko-integration/pull/37): telemetry, diagnostics, stable discovery, sparse-state handling, pump interpretation and tests. |
 | @jpwoodnet-boop | [Client PR 11](https://github.com/geckoal/gecko-iot-client/pull/11): preserving speed configuration separately from runtime state. |
-| @cwm12345 | [PR 10](https://github.com/dansbaker/gecko-intouch3-home-assistant/pull/10): Marketplace migration instructions; [PR 11](https://github.com/dansbaker/gecko-intouch3-home-assistant/pull/11): valid suggested entity IDs and native climate temperature compatibility. [Client PR 13](https://github.com/geckoal/gecko-iot-client/pull/13): normalizing Super Savings mode names. |
+| @cwm12345 | [PR 10](https://github.com/dansbaker/gecko-intouch3-home-assistant/pull/10): Marketplace migration instructions; [issue #20](https://github.com/dansbaker/gecko-intouch3-home-assistant/issues/20): tested Marketplace namespace-upgrade workaround; [PR 11](https://github.com/dansbaker/gecko-intouch3-home-assistant/pull/11): valid suggested entity IDs and native climate temperature compatibility. [Client PR 13](https://github.com/geckoal/gecko-iot-client/pull/13): normalizing Super Savings mode names. |
 | @nmonteleone18 | [Fork](https://github.com/nmonteleone18/ha-gecko-integration): RGB hue/brightness normalization helpers. |
 | @markus-lassfolk | [Fork](https://github.com/markus-lassfolk/hass_gecko_in_touch3_spa): Waterlab cloud reading shapes/endpoints, reported extension discovery and temperature/heat sensor ideas. |
 
